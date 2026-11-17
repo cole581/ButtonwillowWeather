@@ -1,31 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Elk Hills-Buttonwillow Airport (L62) — Weather vs NWS Forecast</title>
+<title>Odys Flight Test Site — Weather vs NWS Forecast</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>try{const t=localStorage.getItem("l62-wx-theme"); if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <style>
 :root{
   color-scheme:light;
-  --bg:#f6f6f4; --surface:#fcfcfb; --border:#e3e2dd; --grid:#ecebe7;
-  --text:#0b0b0b; --text2:#52514e; --muted:#8a8984;
-  --obs:#2a78d6; --fc:#eb6834; --fc-soft:#f3a07e; --now:#0b0b0b;
+  /* Odys palette: black + three teals (#085f6b, #138387, #129899) */
+  --bg:#f2f6f6; --surface:#ffffff; --border:#d9e4e5; --grid:#ebf1f1;
+  --text:#0a1416; --text2:#41575a; --muted:#7f9294;
+  --accent:#085f6b; --accent-2:#138387; --accent-3:#129899; --on-accent:#ffffff;
+  --obs:#0a1416; --fc:#129899; --fc-soft:#93d2d2; --now:#085f6b;
   --good:#0a7d3c; --warn:#a86b00; --bad:#c23b3a;
-  --chip:#efeee9;
+  --chip:#e6eeee;
   --wc-lo:#008300; --wc-mid:#eda100; --wc-hi:#e34948; --wc-na:#8a8984;
-  --day:#fbf3d9;
+  --day:#fbf5e1;
 }
-@media (prefers-color-scheme: dark){
-  :root:where(:not([data-theme="light"])){
+:root[data-theme="dark"]{
     color-scheme:dark;
-    --bg:#121211; --surface:#1a1a19; --border:#2e2d2b; --grid:#262624;
-    --text:#f0efec; --text2:#c3c2b7; --muted:#8f8e86;
-    --obs:#3987e5; --fc:#d95926; --fc-soft:#8f4a2c; --now:#f0efec;
-    --good:#3fb96f; --warn:#e0a42f; --bad:#e66767; --chip:#262624;
+    --bg:#0a1112; --surface:#111c1e; --border:#21363a; --grid:#172729;
+    --text:#edf4f4; --text2:#b0c3c5; --muted:#7c9295;
+    --accent:#1fa8a6; --accent-2:#138387; --accent-3:#129899; --on-accent:#041012;
+    --obs:#edf4f4; --fc:#25b8b5; --fc-soft:#1c5f60; --now:#4cc7c3;
+    --good:#3fb96f; --warn:#e0a42f; --bad:#e66767; --chip:#1a2b2d;
     --wc-lo:#0ca30c; --wc-mid:#c98500; --wc-hi:#e66767; --wc-na:#8f8e86;
-    --day:#24231f;
-  }
+    --day:#1d2620;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -40,9 +42,14 @@ h1{font-size:20px;margin:0 0 2px;font-weight:650;letter-spacing:-.01em}
 .ctl{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2)}
 .seg{display:inline-flex;background:var(--chip);border-radius:7px;padding:2px}
 .seg button{border:0;background:transparent;color:var(--text2);font:inherit;font-size:12.5px;padding:4px 9px;border-radius:5px;cursor:pointer}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.15)}
 .btn{border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;padding:5px 10px;border-radius:7px;cursor:pointer}
-.btn.primary{font-weight:600}
+.btn.primary{font-weight:600;background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.brand{display:flex;align-items:center;gap:14px}
+.brand svg{width:46px;height:38px;flex:none}
+header{border-bottom:3px solid var(--accent);padding-bottom:14px}
+.cellhead h3,.tile .lbl{color:var(--accent)}
+.boardhead b,h2{color:var(--accent)}
 .spacer{flex:1}
 h2{font-size:14px;font-weight:650;margin:22px 0 10px}
 h2 small{font-weight:400;color:var(--muted);margin-left:6px}
@@ -80,7 +87,7 @@ h2 small{font-weight:400;color:var(--muted);margin-left:6px}
 .row-temp{min-height:200px} .row-wind{min-height:290px} .row-precip{min-height:190px} .row-rh{min-height:190px} .row-pres{min-height:190px}
 
 /* wind tile */
-.dial{width:150px;height:150px;flex:none;align-self:center;margin:4px 0}
+.dial{width:200px;height:200px;flex:none;align-self:center;margin:4px 0}
 .dial-card{font-size:11px;fill:var(--muted);font-weight:600}
 .dial-speed{font-size:34px;font-weight:650;fill:var(--text);letter-spacing:-.02em}
 .dial-unit{font-size:12px;fill:var(--text2)}
@@ -92,6 +99,8 @@ h2 small{font-weight:400;color:var(--muted);margin-left:6px}
 .dial-key{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:11px;color:var(--muted);margin-top:8px}
 .dial-key span{display:inline-flex;align-items:center;gap:4px}
 .kdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.limits{margin:-12px -14px 10px;padding:9px 14px;border-radius:9px 9px 0 0;font-weight:700;font-size:14px;letter-spacing:.01em;color:#fff}
+.limits.wc-lo{background:var(--wc-lo)} .limits.wc-mid{background:var(--wc-mid);color:#1a1300} .limits.wc-hi{background:var(--wc-hi)} .limits.wc-na{background:var(--muted)}
 .chip{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
 .wc-lo{background:var(--wc-lo)} .wc-mid{background:var(--wc-mid)} .wc-hi{background:var(--wc-hi)} .wc-na{background:var(--wc-na)}
 
@@ -100,12 +109,12 @@ th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--border);whi
 th:first-child,td:first-child{text-align:left}
 th{font-weight:600;color:var(--text2);font-size:12px}
 .tbl{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:auto}
-.squares{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.squares{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 .sq{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-height:200px;display:flex;flex-direction:column}
 .sq-name{font-size:12.5px;font-weight:600;color:var(--text2)}
 .sq-main{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-variant-numeric:tabular-nums}
 .sq-main .trend{width:26px;height:26px;flex:none}
-.sq-main.up .trend{color:var(--text)} .sq-main.dn .trend{color:var(--text)} .sq-main.eq .trend{color:var(--muted)}
+.sq-main.up .trend{color:var(--accent)} .sq-main.dn .trend{color:var(--accent)} .sq-main.eq .trend{color:var(--muted)}
 .sq-val{font-size:34px;font-weight:650;letter-spacing:-.02em}
 .sq-u{font-size:13px;color:var(--text2);align-self:flex-end;margin-bottom:8px}
 .sq-what{font-size:12px;color:var(--text2);margin-top:2px}
@@ -115,13 +124,11 @@ th{font-weight:600;color:var(--text2);font-size:12px}
 .sq-avg b{color:var(--text);font-weight:600}
 .sq-avg .sq-n{color:var(--muted);font-size:11px;margin-top:2px}
 .sq-none{margin:auto 0;color:var(--muted);font-size:12px}
-.acc-key{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6}
-.acc-key .trend{width:11px;height:11px;vertical-align:-1px}
 details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8px}
 .empty{padding:28px;text-align:center;color:var(--text2);background:var(--surface);border:1px dashed var(--border);border-radius:10px}
 .foot{margin-top:28px;font-size:12px;color:var(--muted);line-height:1.6}
 .foot a{color:inherit}
-.err{color:var(--bad)}
+.err{color:var(--bad)} .warn{color:var(--warn)}
 @media (max-width:760px){
   .board,.boardhead{grid-template-columns:1fr}
   .boardhead span:last-child{display:none}
@@ -136,9 +143,12 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
 <body>
 <div class="wrap">
 <header>
-  <div>
-    <h1>Elk Hills-Buttonwillow Airport (L62) — Weather vs NWS Forecast</h1>
+  <div class="brand">
+    <svg viewBox="0 0 1029 843" role="img" aria-label="Odys"><path d="M1026,45 L1018,43 L622,242 L594,259 L570,278 L551,297 L535,317 L520,340 L505,371 L498,391 L491,420 L488,443 L483,547 L474,634 L464,700 L454,751 L442,800 L432,832 L433,838 L435,840 L445,840 L1026,57 L1028,53Z" fill="var(--text)"/><path d="M1006,5 L1002,1 L713,1 L338,190 L335,194 L335,202 L338,206 L384,230 L417,241 L442,246 L459,248 L500,248 L523,245 L556,237 L582,227 L1003,15 L1006,12Z" fill="#085f6b"/><path d="M167,104 L171,112 L192,123 L224,135 L244,140 L284,145 L321,144 L347,140 L367,135 L397,124 L642,1 L359,1 L171,96Z" fill="#138387"/><path d="M1,14 L7,20 L25,29 L61,42 L95,49 L139,51 L169,48 L212,37 L232,29 L288,1 L9,0 L4,2 L1,6Z" fill="#129899"/></svg>
+    <div>
+    <h1>Odys Flight Test Site — Weather vs NWS Forecast</h1>
     <div class="sub">Elk Hills-Buttonwillow Airport (L62) weather station (≈35.353, −119.481) compared with the NWS forecast for 35.355, −119.481 · times in Pacific</div>
+    </div>
   </div>
   <div class="status">
     <span id="freshness" class="pill"><span class="dot" style="background:var(--muted)"></span>Loading…</span>
@@ -154,6 +164,7 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
   <div class="ctl">Wind <span class="seg" data-k="wu"><button data-v="kt">kt</button><button data-v="mph">mph</button><button data-v="ms">m/s</button></span></div>
   <div class="ctl">Precip <span class="seg" data-k="pu"><button data-v="in">in</button><button data-v="mm">mm</button></span></div>
   <span class="spacer"></span>
+  <button class="btn" id="theme" type="button" title="Switch light / dark"></button>
   <button class="btn" id="refresh" type="button">Reload</button>
 </div>
 
@@ -213,7 +224,8 @@ function windCls(ms){ const k=toKt(ms); if(k==null||!isFinite(k)) return "wc-na"
 const windColor = ms => `var(--${windCls(ms)})`;
 const SVGNS="http://www.w3.org/2000/svg";
 function sv(tag, attrs={}){ const e=document.createElementNS(SVGNS,tag); for(const [k,v] of Object.entries(attrs)) e.setAttribute(k,v); return e; }
-const ARROW_D = "M0,-8 L5,4 L0,1.5 L-5,4 Z";   // points up before rotation
+// Odys logomark as the direction glyph: 18 units tall, centred on (0,0), tip pointing up before rotation
+const ARROW_D = "M0.8,-8.5 L0.7,-8.4 L0.5,0.0 L0.7,1.2 L1.0,2.2 L1.7,3.2 L2.4,3.8 L5.8,6.0 L7.6,7.4 L8.7,8.5 L8.9,8.5 L9.0,8.4 L1.0,-8.4Z M-0.0,-8.5 L-0.1,-8.5 L-2.7,-3.6 L-2.9,4.3 L-2.7,4.5 L-1.8,3.9 L-1.0,3.1 L-0.5,2.1 L-0.1,1.1 L0.1,-8.4Z M-5.8,6.5 L-5.7,6.5 L-5.3,6.2 L-4.6,5.5 L-4.1,4.9 L-3.6,3.7 L-3.5,2.8 L-3.3,-2.4 L-5.9,2.3 L-5.9,6.3Z M-8.8,8.4 L-8.4,8.2 L-7.8,7.7 L-7.4,7.2 L-7.0,6.4 L-6.6,5.1 L-6.5,3.5 L-9.0,8.2 L-9.0,8.4Z";
 
 /* ---------- data (embedded by scripts/build.py) ---------- */
 const DATA = /*__DATA__*/null;
@@ -266,35 +278,39 @@ function el(tag, attrs={}, ...kids){
 function dot(c){ const d=document.createElement("span"); d.className="dot"; d.style.background=c; return d; }
 const swatch = (color, style="solid") => el("i",{class:"sw",style:`border-color:${color};border-top-style:${style}`});
 function windGlyph(color, hollow){
-  const s=sv("svg",{viewBox:"-9 -9 18 18",width:15,height:15,"aria-hidden":"true"});
-  s.append(sv("path",{d:ARROW_D,transform:"rotate(45)",fill:hollow?"none":color,stroke:color,"stroke-width":hollow?1.4:0,"stroke-linejoin":"round"}));
+  const s=sv("svg",{viewBox:"-10 -10 20 20",width:16,height:16,"aria-hidden":"true"});
+  s.append(sv("path",{d:ARROW_D,transform:`rotate(45) scale(${hollow?0.8:0.95})`,fill:color,"fill-opacity":hollow?0.3:1,stroke:color,"stroke-width":hollow?1.2:0,"vector-effect":"non-scaling-stroke","stroke-linejoin":"round"}));
   return s;
 }
 
 /* ---------- status line ---------- */
 function setStatus(){
   const fr=document.getElementById("freshness"), ri=document.getElementById("runinfo");
-  const last=OBS[OBS.length-1];
-  fr.textContent="";
-  if(!last) fr.append(dot("var(--muted)"),"No observations yet");
+  const last=OBS[OBS.length-1], st=DATA&&DATA.status, now=Date.now(), notes=[];
+  const ago=ms=>{ const m=Math.round(ms/60000); return m<90? m+" min" : Math.round(m/60)+" h"; };
+  let level=0;   // 0 current, 1 delayed, 2 stale
+  if(!last){ level=2; notes.push("No station readings yet"); }
   else{
-    const age=(Date.now()-last.t)/60000;
-    const c= age<=90?"var(--good)": age<=180?"var(--warn)":"var(--bad)";
-    fr.append(dot(c), `${age<=90?"Current":age<=180?"Delayed":"Stale"} · obs ${fmtT(new Date(last.t))} (${age<90?Math.round(age)+" min":Math.round(age/60)+" h"} ago)`);
+    const age=now-last.t;
+    if(age>3*HOUR){ level=2; notes.push(`No new station reading for ${ago(age)}`); }
+    else if(age>45*60e3){ level=1; notes.push(`No new station reading for ${ago(age)}`); }
   }
-  ri.textContent="";
-  const st=DATA&&DATA.status;
   if(st){
-    const ok=st.wxm_ok&&st.nws_ok;
-    ri.append(el("span",{class:ok?"":"err"}, `Last collection ${fmtT(new Date(st.at))} · ${ok?"both sources OK": (st.errors||[]).join(" | ")||"partial"}`));
+    const runAge=now-Date.parse(st.at);
+    if(runAge>45*60e3){ level=Math.max(level,runAge>3*HOUR?2:1); notes.push(`Collector last ran ${ago(runAge)} ago`); }
+    if(!st.wxm_ok){ level=Math.max(level,1); notes.push("Last collection couldn't reach WeatherXM"); }
+    if(!st.nws_ok){ level=Math.max(level,1); notes.push("Last collection couldn't reach NWS — forecast may be out of date"); }
   }
-  if(LATEST?.fcst?.issued) ri.append(el("br"), el("span",{}, `NWS forecast issued ${fmtT(new Date(LATEST.fcst.issued))} · grid ${LATEST.fcst.grid||""}`));
-  if(loadErr) ri.append(el("br"), el("span",{class:"err"},loadErr));
+  if(LATEST && now-LATEST.t>3*HOUR){ level=Math.max(level,1); notes.push(`NWS forecast is ${ago(now-LATEST.t)} old`); }
+  if(loadErr){ level=2; notes.push(loadErr); }
+  fr.textContent="";
+  const c=["var(--good)","var(--warn)","var(--bad)"][level];
+  fr.append(dot(c), `${["Current","Delayed","Stale"][level]}${last?` · obs ${fmtT(new Date(last.t))} (${ago(now-last.t)} ago)`:""}`);
+  ri.textContent="";
+  notes.forEach((n,i)=>{ if(i) ri.append(el("br")); ri.append(el("span",{class:level===2?"err":"warn"},n)); });
 }
-
-/* ---------- current-conditions wind dial ---------- */
 function windDial(last, Fnow){
-  const R=60, s=sv("svg",{viewBox:"-86 -86 172 172",class:"dial",role:"img",
+  const R=64, s=sv("svg",{viewBox:"-104 -104 208 208",class:"dial",role:"img",
     "aria-label":`Wind from ${fmt(last.wind_dir,0)} degrees at ${fmt(U.windMs(last.wind_ms),0)} ${U.wUnit()}, gusts ${fmt(U.windMs(last.gust_ms),0)}`});
   const pt=(deg,r)=>[r*Math.sin(deg*Math.PI/180), -r*Math.cos(deg*Math.PI/180)];
   s.append(sv("circle",{r:R,fill:"none",stroke:"var(--border)","stroke-width":1.5}));
@@ -302,23 +318,24 @@ function windDial(last, Fnow){
     const major=d%90===0, [x1,y1]=pt(d,R-(major?8:d%30===0?5:3)), [x2,y2]=pt(d,R);
     s.append(sv("line",{x1,y1,x2,y2,stroke:major?"var(--text2)":"var(--muted)","stroke-width":major?1.5:1,opacity:major?1:.6}));
   }
-  [["N",0],["E",90],["S",180],["W",270]].forEach(([l,d])=>{ const [x,y]=pt(d,R+13); const t=sv("text",{x,y,"text-anchor":"middle","dominant-baseline":"central",class:"dial-card"}); t.textContent=l; s.append(t); });
+  [["N",0],["E",90],["S",180],["W",270]].forEach(([l,d])=>{ const [x,y]=pt(d,R-17); const t=sv("text",{x,y,"text-anchor":"middle","dominant-baseline":"central",class:"dial-card"}); t.textContent=l; s.append(t); });
   const hist=OBS.filter(o=>o.t>=last.t-6*HOUR && o.t<last.t && o.wind_dir!=null);
   hist.forEach((o,i)=>{ const [x,y]=pt(o.wind_dir,R); s.append(sv("circle",{cx:x,cy:y,r:3.2,fill:windColor(o.wind_ms),opacity:(0.25+0.6*(i+1)/hist.length).toFixed(2)})); });
-  if(Fnow.WD){ const g=sv("g",{transform:`rotate(${Fnow.WD.v}) translate(0,${-(R+3)})`}); g.append(sv("path",{d:"M0,0 L-5,-9 L5,-9 Z",fill:"none",stroke:"var(--fc)","stroke-width":1.6,"stroke-linejoin":"round"})); s.append(g); }
-  if(last.wind_dir!=null){
-    const g=sv("g",{transform:`rotate(${last.wind_dir}) translate(0,${-R+2})`});
-    g.append(sv("path",{d:"M0,14 L-9,-6 L0,-1 L9,-6 Z",fill:windColor(last.wind_ms),stroke:"var(--surface)","stroke-width":1.5,"stroke-linejoin":"round"}));
-    s.append(g);
-  }
+  // glyph is 18 units tall (tip at −9 before rotation); rotate(180) points it at the centre.
+  // Observed: tip just touches the ring. NWS: tip just touches the observed arrow's tail when aligned.
+  const SO=1.2, SN=0.75, rObs=R+1+9*SO, rNws=rObs+9*SO+9*SN;
+  if(Fnow.WD){ const g=sv("g",{transform:`rotate(${Fnow.WD.v}) translate(0,${-rNws}) rotate(180) scale(${SN})`});
+    g.append(sv("path",{d:ARROW_D,fill:"var(--fc)","fill-opacity":0.3,stroke:"var(--fc)","stroke-width":1.3,"vector-effect":"non-scaling-stroke","stroke-linejoin":"round"})); s.append(g); }
+  if(last.wind_dir!=null){ const g=sv("g",{transform:`rotate(${last.wind_dir}) translate(0,${-rObs}) rotate(180) scale(${SO})`});
+    g.append(sv("path",{d:ARROW_D,fill:windColor(last.wind_ms),stroke:"var(--surface)","stroke-width":1,"vector-effect":"non-scaling-stroke","stroke-linejoin":"round"})); s.append(g); }
   const sp=sv("text",{x:0,y:-4,"text-anchor":"middle",class:"dial-speed"}); sp.textContent=fmt(U.windMs(last.wind_ms),0); s.append(sp);
   const un=sv("text",{x:0,y:14,"text-anchor":"middle",class:"dial-unit"}); un.textContent=U.wUnit(); s.append(un);
   const gu=sv("text",{x:0,y:32,"text-anchor":"middle",class:"dial-gust"}); gu.textContent=`G ${fmt(U.windMs(last.gust_ms),0)}`; s.append(gu);
   return s;
 }
-function dialKey(kind){
+function dialKey(kind, color){
   const s=sv("svg",{viewBox:"-10 -10 20 20",width:13,height:13,"aria-hidden":"true"});
-  s.append(kind==="solid" ? sv("path",{d:"M0,8 L-7,-6 L0,-2 L7,-6 Z",fill:"var(--text2)"}) : sv("path",{d:"M0,6 L-6,-6 L6,-6 Z",fill:"none",stroke:"var(--fc)","stroke-width":2}));
+  s.append(kind==="solid" ? sv("path",{d:ARROW_D,transform:"rotate(180)",fill:color||"var(--text2)"}) : sv("path",{d:ARROW_D,transform:"rotate(180) scale(0.85)",fill:"var(--fc)","fill-opacity":0.25,stroke:"var(--fc)","stroke-width":1.2,"vector-effect":"non-scaling-stroke"}));
   return s;
 }
 function precip24(last){
@@ -339,7 +356,12 @@ function tiles(last){
     el("div",{class:"fc"}, "NWS forecast ", el("b",{}, Fnow.T?fmt(U.temp(Fnow.T.v),0)+U.tUnit():"—")));
 
   const fW=Fnow.WS?U.windKmh(Fnow.WS.v):null, fG=Fnow.WG?U.windKmh(Fnow.WG.v):null;
+  // limits banner: the worse of sustained wind and gust, using the same 5 / 10 kt bands as the colours
+  const worst = [last.wind_ms,last.gust_ms].filter(v=>v!=null).reduce((a,b)=>Math.max(a,b), -1);
+  const band = worst<0 ? "wc-na" : windCls(worst);
+  const bannerTxt = {"wc-lo":"Wind within limits","wc-mid":"Wind approaching limits","wc-hi":"Wind out of limits","wc-na":"Wind data unavailable"}[band];
   T.wind=el("div",{class:"tile row-wind",id:"cc-wind"},
+    el("div",{class:"limits "+band,role:"status"}, bannerTxt),
     el("div",{class:"lbl"},"Wind"),
     windDial(last,Fnow),
     el("div",{class:"wind-txt"},
@@ -348,7 +370,7 @@ function tiles(last){
       el("span",{class:"k"},"Gust"), el("span",{class:"v"}, el("b",{},`${fmt(U.windMs(last.gust_ms),0)} ${U.wUnit()}`), el("i",{class:"chip "+windCls(last.gust_ms)})),
       el("span",{class:"k"},"NWS"), el("span",{class:"v fcl"}, Fnow.WD||Fnow.WS ? `${fmt(Fnow.WD?.v,0)}° ${card(Fnow.WD?.v)} @ ${fmt(fW,0)}${fG!=null?" G "+fmt(fG,0):""} ${U.wUnit()}` : "—")));
   T.wind.append(el("div",{class:"dial-key"},
-    el("span",{},dialKey("solid"),"Observed, from"), el("span",{},dialKey("hollow"),"NWS, from"), el("span",{},el("i",{class:"kdot"}),"Last 6 h")));
+    el("span",{},dialKey("solid", windColor(last.wind_ms)),"Observed, from"), el("span",{},dialKey("hollow"),"NWS, from"), el("span",{},el("i",{class:"kdot"}),"Last 6 h")));
 
   const p=precip24(last);
   T.precip=el("div",{class:"tile row-precip",id:"cc-precip"},
@@ -516,8 +538,9 @@ function windChart(plot, rows){
   const arrow=(p,hollow)=>{
     if(p.s==null) return;
     if(p.d==null){ layer.append("circle").attr("cx",x(p.t)).attr("cy",y(p.s)).attr("r",3.5).attr("fill",windColor(p.sms)); return; }
-    layer.append("path").attr("d",ARROW_D).attr("transform",`translate(${x(p.t)},${y(p.s)}) rotate(${(p.d+180)%360})${hollow?" scale(0.65)":""}`)
-      .attr("fill",hollow?"var(--surface)":windColor(p.sms)).attr("stroke",hollow?windColor(p.sms):"var(--surface)").attr("stroke-width",hollow?2:1).attr("stroke-linejoin","round");
+    layer.append("path").attr("d",ARROW_D).attr("transform",`translate(${x(p.t)},${y(p.s)}) rotate(${(p.d+180)%360}) scale(${hollow?0.62:1.2})`)
+      .attr("fill",windColor(p.sms)).attr("fill-opacity",hollow?0.3:1).attr("stroke",hollow?windColor(p.sms):"var(--surface)")
+      .attr("stroke-width",hollow?1:0.6).attr("vector-effect","non-scaling-stroke").attr("stroke-linejoin","round");
   };
   // observed arrows: only the reading taken at the top of each hour (within ±7 min of :00,
   // i.e. the :00 run of the 15-minute schedule). Other readings show only in the lines.
@@ -545,12 +568,6 @@ function accVars(){
     {key:"rh_pct",  name:"Relative humidity", unit:" pts", dec:0, tol:1, conv:d=>d, val:v=>v, vunit:"%", up:"More humid than forecast", dn:"Drier than forecast"},
   ];
 }
-function trendIcon(dir){
-  const s=sv("svg",{viewBox:"-12 -12 24 24",class:"trend","aria-hidden":"true"});
-  if(dir===0) s.append(sv("rect",{x:-8,y:-2,width:16,height:4,rx:2,fill:"currentColor"}));
-  else s.append(sv("path",{d:dir>0?"M0,-10 L9,6 L-9,6 Z":"M0,10 L9,-6 L-9,-6 Z",fill:"currentColor"}));
-  return s;
-}
 function renderAccuracy(){
   const box=document.getElementById("acc"); if(!box) return;
   const A=DATA&&DATA.accuracy, L=A&&A.leads&&A.leads[String(state.lead)];
@@ -565,7 +582,7 @@ function renderAccuracy(){
     if(!s||!s.n){ sq.classList.add("sq-empty"); sq.append(el("div",{class:"sq-none"}, state.lead?`Builds up once ${state.lead} h of forecasts have been collected`:"No matched readings yet")); box.append(sq); return; }
     const e=v.conv(s.last.err), dir= e==null?0: Math.abs(e)<v.tol?0: e>0?1:-1;
     const vu=v.vunit||v.unit;
-    sq.append(el("div",{class:"sq-main "+(dir>0?"up":dir<0?"dn":"eq")}, trendIcon(dir),
+    sq.append(el("div",{class:"sq-main "+(dir>0?"up":dir<0?"dn":"eq")},
       el("span",{class:"sq-val"}, dir===0?"0":sgn(e,v.dec)), el("span",{class:"sq-u"},v.unit.trim())));
     sq.append(el("div",{class:"sq-what"}, dir===0?"Matched forecast":dir>0?v.up:v.dn));
     const u_=vu.trim(), wu=x=>fmt(x,v.dec)+(/^[°%]/.test(u_)?u_:" "+u_);
@@ -596,7 +613,7 @@ function render(){
 
   main.append(el("div",{class:"boardhead"},
     el("span",{}, el("b",{},"Current conditions"), last?"as of "+fmtT(new Date(last.t)):""),
-    el("span",{}, el("b",{},"Observed vs forecast"), `dashed = NWS (${leadLbl}) · faint dashed = newest NWS forecast ahead · shaded = daylight · scroll sideways for more`)));
+    el("span",{}, el("b",{},"Observed vs forecast"))));
   const board=el("div",{class:"board"}); main.append(board);
   const T = last ? tiles(last) : {};
   const obsLeg=()=>el("div",{class:"legend"}, el("span",{},swatch("var(--obs)"),"Observed"), el("span",{},swatch("var(--fc)","dashed"),"NWS"));
@@ -636,8 +653,6 @@ function render(){
   /* accuracy (bottom) */
   main.append(el("h2",{id:"accuracy"},"Forecast accuracy",el("small",{id:"acc-sub"})));
   main.append(el("div",{class:"squares",id:"acc"}));
-  main.append(el("div",{class:"acc-key"}, trendIcon(1)," actual was higher than forecast   ", trendIcon(-1)," lower   ", trendIcon(0)," about the same. ",
-    "Big number = most recent hour. Average = mean of (actual − forecast) over all collected data; a consistent + or − means NWS runs low or high here. Typical miss = mean absolute difference. Wind direction excludes calm readings (under 2 kt). Every value is also logged to forecast_errors.csv."));
 
   /* plots need the layout in place to size themselves */
   const visW = Math.max(200, cells.temp.plot.clientWidth - 44);
@@ -685,6 +700,11 @@ document.getElementById("tonow").addEventListener("click",()=>{
   render();
 });
 document.getElementById("refresh").addEventListener("click",()=>location.reload());
+const themeBtn=document.getElementById("theme");
+const setThemeLabel=()=>{ themeBtn.textContent = document.documentElement.getAttribute("data-theme")==="dark" ? "Light mode" : "Dark mode"; };
+themeBtn.addEventListener("click",()=>{ const t=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",t); try{localStorage.setItem("l62-wx-theme",t);}catch(e){} setThemeLabel(); render(); });
+setThemeLabel();
 let rz, lastW=0;
 new ResizeObserver(es=>{ const w=Math.round(es[0].contentRect.width); if(w===lastW) return; lastW=w; clearTimeout(rz); rz=setTimeout(()=>{ if(OBS.length||RUNS.length) render(); },150); }).observe(document.querySelector(".wrap"));
 syncControls();
