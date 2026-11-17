@@ -2,7 +2,9 @@
 """Builds the dashboard and the analysis table from the files collect.py keeps.
 
   docs/index.html      the dashboard (GitHub Pages serves it); last 8 days of data + newest 7-day forecast embedded
-  data/matched.csv     every observation with the NWS forecast for that hour at 0/3/6/12/24 h lead
+  data/matched.csv     every observation with the NWS forecast for that hour at 0/3/6/12/24 h lead (wide table)
+  data/forecast_errors.csv   append-only log: one row per observation per lead with actual, forecast and
+                             actual - forecast for each variable (rows are only ever added, never rewritten)
 
 Standard library only.  Usage: python scripts/build.py   (WX_NOW=ISO time overrides the clock, for testing)
 """
@@ -139,6 +141,104 @@ def write_matched(obs, runs):
     os.replace(tmp, os.path.join(DATA, "matched.csv"))
 
 
+# variable: (log column stem, obs key, forecast key, forecast -> SI conversion)
+ERR_VARS = [
+    ("temp_c", "temp_c", "T", lambda v: v),
+    ("wind_ms", "wind_ms", "WS", lambda v: v / 3.6),
+    ("gust_ms", "gust_ms", "WG", lambda v: v / 3.6),
+    ("wind_dir_deg", "wind_dir", "WD", lambda v: v),
+    ("precip_mm", "precip_mm", "QPF", lambda v: v),
+    ("rh_pct", "rh", "RH", lambda v: v),
+]
+ERR_COLS = ["obs_time_utc", "lead_h", "fcst_fetched_utc"] + \
+    [f"{n}_{k}" for n, *_ in ERR_VARS for k in ("actual", "forecast", "error")]
+CALM_MS = 1.0   # direction error is left blank when the observed wind is below this
+
+
+def err_of(name, a, f):
+    if a is None or f is None:
+        return None
+    if name == "wind_dir_deg":
+        return round(((a - f + 540) % 360) - 180, 1)
+    return round(a - f, 3)
+
+
+def update_error_log(obs, runs):
+    """Append rows for observations not yet logged. Existing rows are never changed."""
+    path = os.path.join(DATA, "forecast_errors.csv")
+    seen, new_file = set(), not os.path.exists(path)
+    if not new_file:
+        with open(path, newline="") as f:
+            for r in csv.DictReader(f):
+                seen.add((r["obs_time_utc"], r["lead_h"]))
+    m, added = Matcher(runs), 0
+    with open(path, "a", newline="") as f:
+        w = csv.writer(f)
+        if new_file:
+            w.writerow(ERR_COLS)
+        for o in obs:
+            hour = o["_t"].replace(minute=0, second=0, microsecond=0)
+            for L in LEADS:
+                if (o["ts"], str(L)) in seen:
+                    continue
+                cut, fetched, row = o["_t"] - timedelta(hours=L), None, [o["ts"], L]
+                cells = []
+                for name, okey, fkey, conv in ERR_VARS:
+                    fv, rt = m.at(hour, fkey, cut)
+                    fv = None if fv is None else round(conv(fv), 3)
+                    if rt and (fetched is None or rt > fetched):
+                        fetched = rt
+                    a = o.get(okey)
+                    e = err_of(name, a, fv)
+                    if name == "wind_dir_deg" and (o.get("wind_ms") is None or o["wind_ms"] < CALM_MS):
+                        e = None
+                    cells += [a, fv, e]
+                row += [iso_z(fetched) if fetched else None] + cells
+                w.writerow(["" if x is None else x for x in row])
+                added += 1
+    return added
+
+
+def accuracy_summary(now):
+    """All-time / 7-day / 24-hour statistics of actual - forecast, per lead and variable."""
+    path = os.path.join(DATA, "forecast_errors.csv")
+    out = {"since": None, "leads": {}}
+    if not os.path.exists(path):
+        return out
+    acc = {}
+    with open(path, newline="") as f:
+        for r in csv.DictReader(f):
+            t = parse_t(r["obs_time_utc"])
+            for name, *_ in ERR_VARS:
+                e = num(r.get(f"{name}_error"))
+                if e is None:
+                    continue
+                acc.setdefault(r["lead_h"], {}).setdefault(name, []).append(
+                    (t, e, num(r.get(f"{name}_actual")), num(r.get(f"{name}_forecast"))))
+    for lead, byvar in acc.items():
+        res = {}
+        for name, pts in byvar.items():
+            pts.sort(key=lambda p: p[0])
+            es = [p[1] for p in pts]
+            def mean_since(h):
+                xs = [p[1] for p in pts if p[0] >= now - timedelta(hours=h)]
+                return (round(sum(xs) / len(xs), 3), len(xs)) if xs else (None, 0)
+            m24, n24 = mean_since(24)
+            m7, n7 = mean_since(168)
+            last = pts[-1]
+            res[name] = {
+                "n": len(es), "mean": round(sum(es) / len(es), 3),
+                "mae": round(sum(abs(e) for e in es) / len(es), 3),
+                "rmse": round((sum(e * e for e in es) / len(es)) ** 0.5, 3),
+                "mean24": m24, "n24": n24, "mean7d": m7, "n7d": n7, "first": iso_z(pts[0][0]),
+                "last": {"t": iso_z(last[0]), "err": last[1], "actual": last[2], "forecast": last[3]},
+            }
+        out["leads"][lead] = res
+    firsts = [v["first"] for res in out["leads"].values() for v in res.values()]
+    out["since"] = min(firsts) if firsts else None
+    return out
+
+
 def page_data(obs, runs, now):
     since = now - timedelta(days=PAGE_DAYS)
     p_obs = [{k: v for k, v in o.items() if not k.startswith("_")} for o in obs if o["_t"] >= since]
@@ -162,7 +262,8 @@ def page_data(obs, runs, now):
             latest = {"at": lf["at"], "fcst": {k: lf.get(k) for k in ["issued", "grid", "t", *VARS]}}
         except (OSError, ValueError, KeyError):
             latest = None
-    return {"built": iso_z(now), "status": last_status(), "obs": p_obs, "runs": p_runs, "latest": latest}
+    return {"built": iso_z(now), "status": last_status(), "obs": p_obs, "runs": p_runs, "latest": latest,
+            "accuracy": accuracy_summary(now)}
 
 
 def main():
@@ -170,6 +271,7 @@ def main():
     os.makedirs(DATA, exist_ok=True)
     obs, runs = load_obs(), load_runs()
     write_matched(obs, runs)
+    added = update_error_log(obs, runs)
     data = json.dumps(page_data(obs, runs, now), separators=(",", ":")).replace("</", "<\\/")
     with open(os.path.join(ROOT, "scripts", "template.html")) as f:
         html = f.read()
@@ -178,7 +280,7 @@ def main():
     os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
     with open(os.path.join(ROOT, "docs", "index.html"), "w") as f:
         f.write(html.replace(marker, data))
-    print(f"built: {len(obs)} observations, {len(runs)} forecast snapshots, page {len(data)//1024} KB")
+    print(f"built: {len(obs)} observations, {len(runs)} forecast snapshots, {added} error-log rows added, page {len(data)//1024} KB")
 
 
 if __name__ == "__main__":
