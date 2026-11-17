@@ -1,4 +1,4 @@
-# High Indigo Air — weather vs NWS forecast
+# Elk Hills-Buttonwillow Airport (L62) — weather vs NWS forecast
 
 Hourly collector and dashboard comparing the WeatherXM station **High Indigo Air** (Elk Hills area, ≈35.353, −119.481) with the NWS hourly forecast for 35.355, −119.481.
 
