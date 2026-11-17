@@ -1,0 +1,2 @@
+ts,temp_c,dew_c,rh,wind_ms,gust_ms,wind_dir,precip_rate_mmh,precip_accum_mm,pressure_hpa,icon,active,fetched
+2026-11-17T00:17:00Z,11.28,9.86,91.0,0.0,0.0,187.0,0.0,5.34,1006.4,partly-cloudy-day,True,2026-11-17T00:18:12Z
