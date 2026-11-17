@@ -519,10 +519,10 @@ function windChart(plot, rows){
     layer.append("path").attr("d",ARROW_D).attr("transform",`translate(${x(p.t)},${y(p.s)}) rotate(${(p.d+180)%360})${hollow?" scale(0.65)":""}`)
       .attr("fill",hollow?"var(--surface)":windColor(p.sms)).attr("stroke",hollow?windColor(p.sms):"var(--surface)").attr("stroke-width",hollow?2:1).attr("stroke-linejoin","round");
   };
-  // observed arrows: one per clock hour, the reading closest to the top of the hour
-  // (within ±10 min; if the hour has none that close, the closest within ±30 min)
-  const hourly=[]; const byH=new Map();
-  obs.forEach(p=>{ if(p.s==null) return; const H=Math.round(p.t/HOUR)*HOUR, d=Math.abs(p.t-H); if(d>30*60e3) return;
+  // observed arrows: only the reading taken at the top of each hour (within ±7 min of :00,
+  // i.e. the :00 run of the 15-minute schedule). Other readings show only in the lines.
+  const ON_HOUR_MS=7*60e3, hourly=[]; const byH=new Map();
+  obs.forEach(p=>{ if(p.s==null) return; const H=Math.round(p.t/HOUR)*HOUR, d=Math.abs(p.t-H); if(d>ON_HOUR_MS) return;
     const cur=byH.get(H); if(!cur||d<cur.d) byH.set(H,{p,d}); });
   [...byH.keys()].sort((a,b)=>a-b).forEach(H=>hourly.push(byH.get(H).p));
   thin(fut).forEach(p=>arrow(p,true)); thin(hourly).forEach(p=>arrow(p,false));
