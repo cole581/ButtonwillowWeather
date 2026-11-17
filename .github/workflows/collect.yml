@@ -1,9 +1,11 @@
 name: Collect weather
 
 on:
+  # Main trigger: an outside scheduler (cron-job.org) calls workflow_dispatch every 15 min.
+  # GitHub's own schedule is only a backup: it is best-effort and often late or skipped.
   schedule:
-    - cron: "41 * * * *"   # every hour at :41 UTC (GitHub may start it a few minutes late)
-  workflow_dispatch:        # "Run workflow" button for a manual run
+    - cron: "41 * * * *"
+  workflow_dispatch:        # "Run workflow" button, and the API call the outside scheduler makes
 
 permissions:
   contents: write           # lets the job commit the new data back to the repo
