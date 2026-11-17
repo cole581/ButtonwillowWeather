@@ -10,7 +10,7 @@
   color-scheme:light;
   --bg:#f6f6f4; --surface:#fcfcfb; --border:#e3e2dd; --grid:#ecebe7;
   --text:#0b0b0b; --text2:#52514e; --muted:#8a8984;
-  --obs:#2a78d6; --fc:#eb6834; --fc-soft:#f3a07e;
+  --obs:#2a78d6; --fc:#eb6834; --fc-soft:#f3a07e; --now:#0b0b0b;
   --good:#0a7d3c; --warn:#a86b00; --bad:#c23b3a;
   --chip:#efeee9;
   --wc-lo:#008300; --wc-mid:#eda100; --wc-hi:#e34948; --wc-na:#8a8984;
@@ -20,54 +20,76 @@
     color-scheme:dark;
     --bg:#121211; --surface:#1a1a19; --border:#2e2d2b; --grid:#262624;
     --text:#f0efec; --text2:#c3c2b7; --muted:#8f8e86;
-    --obs:#3987e5; --fc:#d95926; --fc-soft:#8f4a2c;
+    --obs:#3987e5; --fc:#d95926; --fc-soft:#8f4a2c; --now:#f0efec;
     --good:#3fb96f; --warn:#e0a42f; --bad:#e66767; --chip:#262624;
     --wc-lo:#0ca30c; --wc-mid:#c98500; --wc-hi:#e66767; --wc-na:#8f8e86;
   }
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+.wrap{max-width:1440px;margin:0 auto;padding:20px 16px 48px}
 header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
 h1{font-size:20px;margin:0 0 2px;font-weight:650;letter-spacing:-.01em}
 .sub{color:var(--text2);font-size:13px}
-.sub a{color:inherit}
 .status{display:flex;flex-direction:column;gap:4px;align-items:flex-end;font-size:12.5px;color:var(--text2)}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;background:var(--chip);font-weight:550;font-size:12px}
 .pill .dot{width:8px;height:8px;border-radius:50%}
-.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:16px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;position:sticky;top:0;z-index:20}
 .ctl{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2)}
 .seg{display:inline-flex;background:var(--chip);border-radius:7px;padding:2px}
 .seg button{border:0;background:transparent;color:var(--text2);font:inherit;font-size:12.5px;padding:4px 9px;border-radius:5px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .btn{border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;padding:5px 10px;border-radius:7px;cursor:pointer}
-h2{font-size:14px;font-weight:650;margin:22px 0 10px;color:var(--text)}
+.btn.primary{font-weight:600}
+.spacer{flex:1}
+h2{font-size:14px;font-weight:650;margin:22px 0 10px}
 h2 small{font-weight:400;color:var(--muted);margin-left:6px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px}
-.tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;min-height:112px}
+.boardhead{display:grid;grid-template-columns:minmax(220px,1fr) 3fr;gap:10px;margin:0 0 6px;font-size:12px;color:var(--muted)}
+.boardhead b{color:var(--text);font-size:14px;font-weight:650;margin-right:6px}
+
+/* 5 x 2 board: current conditions (left) | observed vs forecast plot (right, 3x wider) */
+.board{display:grid;grid-template-columns:minmax(220px,1fr) 3fr;gap:10px}
+.tile,.cell{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.tile{padding:12px 14px;display:flex;flex-direction:column}
 .tile .lbl{font-size:12px;color:var(--text2);display:flex;justify-content:space-between;gap:6px}
-.tile .val{font-size:28px;font-weight:650;letter-spacing:-.02em;margin:4px 0 2px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px}
+.tile .val{font-size:30px;font-weight:650;letter-spacing:-.02em;margin:4px 0 4px;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
+.tile .val.xl{font-size:44px}
 .tile .val .u{font-size:14px;font-weight:500;color:var(--text2)}
-.tile .fc{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
+.tile .fc{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums;margin-top:2px}
 .tile .fc b{font-weight:600;color:var(--text)}
-.delta{font-size:12px;font-variant-numeric:tabular-nums;color:var(--text2)}
-.arrow{width:22px;height:22px;flex:none}
-.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:12px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 12px 6px;position:relative}
-.card h3{margin:0 0 2px;font-size:13px;font-weight:620}
-.card .note{font-size:11.5px;color:var(--muted);margin-bottom:4px}
-.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--text2);margin:4px 0 12px}
-.legend span{display:inline-flex;align-items:center;gap:6px}
-.sw{width:18px;height:0;border-top:2px solid}
-.chart{width:100%;position:relative}
-.chart svg{display:block;overflow:visible}
+.tile .icon{text-transform:capitalize;color:var(--muted)}
+.cell{padding:10px 0 4px;display:flex;flex-direction:column;min-width:0}
+.cellhead{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:0 12px 4px}
+.cellhead h3{margin:0;font-size:13px;font-weight:620}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--text2)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:16px;height:0;border-top:2px solid;display:inline-block}
+.plot{position:relative;flex:1;min-height:150px}
+.plot-in{position:absolute;inset:0;display:flex}
+.yaxis{flex:none;width:44px}
+.scroller{flex:1;overflow-x:auto;overflow-y:hidden;position:relative;scrollbar-width:thin;overscroll-behavior-x:contain}
+.scroller .inner{position:relative;height:100%}
+.scroller svg,.yaxis svg{display:block}
 .axis text{fill:var(--muted);font-size:11px}
 .axis path,.axis line{stroke:var(--border)}
-.gridl line{stroke:var(--grid)}
-.gridl path{display:none}
 .tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.14);white-space:nowrap;z-index:5;display:none;font-variant-numeric:tabular-nums}
 .tip .t{color:var(--text2);margin-bottom:3px}
 .tip .r{display:flex;align-items:center;gap:6px}
+.row-temp{min-height:200px} .row-wind{min-height:290px} .row-precip{min-height:190px} .row-rh{min-height:190px} .row-pres{min-height:190px}
+
+/* wind tile */
+.dial{width:150px;height:150px;flex:none;align-self:center;margin:4px 0}
+.dial-card{font-size:11px;fill:var(--muted);font-weight:600}
+.dial-speed{font-size:34px;font-weight:650;fill:var(--text);letter-spacing:-.02em}
+.dial-unit{font-size:12px;fill:var(--text2)}
+.dial-gust{font-size:13px;font-weight:600;fill:var(--text2)}
+.wind-txt{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px;font-variant-numeric:tabular-nums;align-items:center}
+.wind-txt .k{color:var(--text2);font-size:12px}
+.wind-txt .v{display:flex;align-items:center;gap:6px}
+.wind-txt .fcl{color:var(--text2);font-size:12px}
+.chip{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
+.wc-lo{background:var(--wc-lo)} .wc-mid{background:var(--wc-mid)} .wc-hi{background:var(--wc-hi)} .wc-na{background:var(--wc-na)}
+
 table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
 th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
 th:first-child,td:first-child{text-align:left}
@@ -78,36 +100,15 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
 .foot{margin-top:28px;font-size:12px;color:var(--muted);line-height:1.6}
 .foot a{color:inherit}
 .err{color:var(--bad)}
-/* current conditions 4-pack */
-.cc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.cc .tile{min-height:0}
-.tile.big{padding:16px 18px}
-.tile .val.xl{font-size:48px;margin:6px 0 4px}
-.tile.small{padding:10px 14px}
-.tile.small .val{font-size:22px}
-.tile .icon{text-transform:capitalize;color:var(--muted)}
-.spark{margin-top:10px;width:100%}
-.spark svg{display:block}
-.spark-key{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:2px}
-.spark-key .sw{width:14px}
-.wind-row{display:flex;align-items:center;gap:16px;margin-top:4px}
-.dial{width:168px;height:168px;flex:none}
-.dial-card{font-size:11px;fill:var(--muted);font-weight:600}
-.dial-speed{font-size:34px;font-weight:650;fill:var(--text);letter-spacing:-.02em}
-.dial-unit{font-size:12px;fill:var(--text2)}
-.dial-gust{font-size:13px;font-weight:600;fill:var(--text2)}
-.wind-txt{display:flex;flex-direction:column;gap:5px;min-width:0;font-variant-numeric:tabular-nums}
-.wl{display:flex;align-items:center;gap:8px;font-size:13.5px}
-.wl .k{width:46px;color:var(--text2);font-size:12px}
-.wl.fcl{color:var(--text2);font-size:12.5px}
-.wkey{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
-.chip{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
-.wc-lo{background:var(--wc-lo)} .wc-mid{background:var(--wc-mid)} .wc-hi{background:var(--wc-hi)} .wc-na{background:var(--wc-na)}
-.dia{display:inline-block;width:8px;height:8px;transform:rotate(45deg);border:1.5px solid var(--text2);background:var(--text2)}
-.legend .bands{gap:5px}
-.legend .bands .chip{margin-left:6px}
-.card.wide{grid-column:1/-1}
-@media (max-width:640px){ .cc{grid-template-columns:1fr} .wind-row{flex-direction:column;align-items:flex-start} }
+@media (max-width:760px){
+  .board,.boardhead{grid-template-columns:1fr}
+  .boardhead span:last-child{display:none}
+  .board .cell{margin-bottom:8px}
+  .row-temp,.row-wind,.row-precip,.row-rh,.row-pres{min-height:0}
+  .board .cell{min-height:210px}
+  .board .cell.row-wind{min-height:270px}
+  .status{align-items:flex-start}
+}
 </style>
 </head>
 <body>
@@ -124,11 +125,13 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
 </header>
 
 <div class="controls" role="group" aria-label="View options">
-  <div class="ctl">Range <span class="seg" data-k="range"><button data-v="24">24 h</button><button data-v="72">3 d</button><button data-v="168">7 d</button></span></div>
+  <div class="ctl">Window <span class="seg" data-k="range"><button data-v="24">24 h</button><button data-v="72">3 d</button><button data-v="168">7 d</button></span></div>
+  <button class="btn primary" id="tonow" type="button" title="Scroll the plots so now is 3 hours from the left edge">Reset to now</button>
   <div class="ctl">Forecast lead <span class="seg" data-k="lead"><button data-v="0">Latest</button><button data-v="3">3 h</button><button data-v="6">6 h</button><button data-v="12">12 h</button><button data-v="24">24 h</button></span></div>
   <div class="ctl">Temp <span class="seg" data-k="tu"><button data-v="F">°F</button><button data-v="C">°C</button></span></div>
   <div class="ctl">Wind <span class="seg" data-k="wu"><button data-v="kt">kt</button><button data-v="mph">mph</button><button data-v="ms">m/s</button></span></div>
   <div class="ctl">Precip <span class="seg" data-k="pu"><button data-v="in">in</button><button data-v="mm">mm</button></span></div>
+  <span class="spacer"></span>
   <button class="btn" id="refresh" type="button">Reload</button>
 </div>
 
@@ -139,7 +142,7 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
   Forecast: <a href="https://forecast.weather.gov/MapClick.php?FcstType=graphical&textField1=35.355&textField2=-119.481">NWS hourly forecast graph</a> (same NDFD grid, via api.weather.gov gridpoint data), snapshotted every hour.
   “Forecast lead” picks, for each observation, the newest forecast issued at least that many hours earlier, so you can see how accuracy changes with lead time. “Latest” uses the newest forecast fetched before the observation.
   <span id="datalinks"></span>
-  Gust direction is not reported separately by either source; the station’s wind direction is used. Observed hourly precipitation is the change in the station’s accumulated-rain counter between samples; NWS 6-hour QPF is spread evenly across its hours.
+  Gust direction is not reported separately by either source; the station’s wind direction is used. Observed hourly precipitation is the change in the station’s accumulated-rain counter between samples; NWS 6-hour QPF is spread evenly across its hours. NWS does not forecast station pressure, so that plot is observed only.
 </div>
 </div>
 
@@ -147,15 +150,19 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
 (function(){
 "use strict";
 const TZ = "America/Los_Angeles";
+const HOUR = 3600e3, LEFT_PAD_H = 3;   // "now" sits 3 h from the left edge by default
 const state = { range:24, lead:0, tu:"F", wu:"kt", pu:"in" };
-try{ const s = JSON.parse(localStorage.getItem("hia-wx-prefs")||"{}"); Object.assign(state, s); }catch(e){}
-const savePrefs = ()=>{ try{ const {tableOpen, ...p}=state; localStorage.setItem("hia-wx-prefs", JSON.stringify(p)); }catch(e){} };
-let OBS = [], RUNS = [], loadErr = null;
+try{ const s = JSON.parse(localStorage.getItem("l62-wx-prefs")||"{}"); for(const k of ["range","lead","tu","wu","pu"]) if(k in s) state[k]=s[k]; }catch(e){}
+const savePrefs = ()=>{ try{ localStorage.setItem("l62-wx-prefs", JSON.stringify({range:state.range,lead:state.lead,tu:state.tu,wu:state.wu,pu:state.pu})); }catch(e){} };
+// left edge of the plots, kept relative to "now" across the page's periodic reloads
+let viewStart = Date.now() - LEFT_PAD_H*HOUR;
+try{ const off=sessionStorage.getItem("l62-wx-view-offset"); if(off!=null && isFinite(+off)) viewStart = Date.now() + (+off); }catch(e){}
+const saveView = ()=>{ try{ sessionStorage.setItem("l62-wx-view-offset", String(viewStart-Date.now())); }catch(e){} };
+let OBS = [], RUNS = [], LATEST = null, loadErr = null, tableOpen = false;
 
-/* ---------- units ---------- */
+/* ---------- units & formatting ---------- */
 const U = {
   temp: c => c==null?null:(state.tu==="F"? c*9/5+32 : c),
-  tdiff: d => d==null?null:(state.tu==="F"? d*9/5 : d),
   tUnit: ()=> state.tu==="F"?"°F":"°C",
   windMs: ms => ms==null?null:(state.wu==="kt"? ms*1.943844 : state.wu==="mph"? ms*2.236936 : ms),
   windKmh: k => k==null?null:U.windMs(k/3.6),
@@ -170,19 +177,33 @@ const CARD = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W"
 const card = d => d==null?"":CARD[Math.round(((d%360)+360)%360/22.5)%16];
 const dirDiff = (f,o)=> (f==null||o==null)?null:((f-o+540)%360)-180;
 const tFmt = new Intl.DateTimeFormat("en-US",{timeZone:TZ,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
-const tShort = new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"});
 const fmtT = d => tFmt.format(d);
-const HOUR = 3600e3;
+const hpH = new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",hourCycle:"h23"});
+const hpD = new Intl.DateTimeFormat("en-US",{timeZone:TZ,weekday:"short",month:"short",day:"numeric"});
+const hpL = new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric"});
+const tickFmt = d => Number(hpH.format(d))%24===0 ? hpD.format(d) : hpL.format(d);
 const floorHour = t => Math.floor(t/HOUR)*HOUR;
+
+/* ---------- wind colour bands (thresholds in knots) ---------- */
+const WIND_BANDS_KT = [5, 10];               // < 5 green, 5–10 yellow, > 10 red
+const toKt = ms => ms==null?null:ms*1.943844;
+function windCls(ms){ const k=toKt(ms); if(k==null||!isFinite(k)) return "wc-na"; return k<WIND_BANDS_KT[0]?"wc-lo":k<=WIND_BANDS_KT[1]?"wc-mid":"wc-hi"; }
+const windColor = ms => `var(--${windCls(ms)})`;
+const SVGNS="http://www.w3.org/2000/svg";
+function sv(tag, attrs={}){ const e=document.createElementNS(SVGNS,tag); for(const [k,v] of Object.entries(attrs)) e.setAttribute(k,v); return e; }
+const ARROW_D = "M0,-8 L5,4 L0,1.5 L-5,4 Z";   // points up before rotation
 
 /* ---------- data (embedded by scripts/build.py) ---------- */
 const DATA = /*__DATA__*/null;
+function parseRun(r){ return {...r, t:Date.parse(r.at), idx:new Map(r.fcst.t.map((s,i)=>[Date.parse(s),i]))}; }
 function load(){
   if(!DATA){ loadErr="No data embedded yet — run the workflow once."; render(); return; }
+  let prev=null;
   OBS = (DATA.obs||[]).filter(o=>o.ts).map(o=>({...o, t:Date.parse(o.ts)})).sort((a,b)=>a.t-b.t)
-        .filter((o,i,a)=> i===0 || o.t!==a[i-1].t);
-  RUNS = (DATA.runs||[]).filter(r=>r.at&&r.fcst&&Array.isArray(r.fcst.t)).map(r=>({...r, t:Date.parse(r.at),
-        idx:new Map(r.fcst.t.map((s,i)=>[Date.parse(s),i]))})).sort((a,b)=>a.t-b.t);
+        .filter((o,i,a)=> i===0 || o.t!==a[i-1].t)
+        .map(o=>{ let p=null; const a=o.precip_accum_mm; if(a!=null&&prev!=null) p = a>=prev? a-prev : a; if(a!=null) prev=a; return {...o, p_obs:p}; });
+  RUNS = (DATA.runs||[]).filter(r=>r.at&&r.fcst&&Array.isArray(r.fcst.t)).map(parseRun).sort((a,b)=>a.t-b.t);
+  LATEST = DATA.latest && DATA.latest.fcst ? parseRun(DATA.latest) : (RUNS[RUNS.length-1]||null);
   render();
 }
 
@@ -190,57 +211,38 @@ function load(){
 function fcAt(h, refT, leadH, key){
   const cutoff = refT - leadH*HOUR;
   for(let i=RUNS.length-1;i>=0;i--){
-    const r=RUNS[i];
-    if(r.t>cutoff || !r.idx) continue;
-    const j=r.idx.get(h);
-    if(j===undefined) continue;
-    const v=r.fcst[key]?.[j];
-    if(v==null) continue;
+    const r=RUNS[i]; if(r.t>cutoff) continue;
+    const j=r.idx.get(h); if(j===undefined) continue;
+    const v=r.fcst[key]?.[j]; if(v==null) continue;
     return {v, run:r};
   }
   return null;
 }
-const latestRun = ()=>{ for(let i=RUNS.length-1;i>=0;i--) if(RUNS[i].fcst) return RUNS[i]; return null; };
-
 function buildRows(){
-  const since = Date.now() - state.range*HOUR;
-  const rows=[];
-  let prevAcc=null;
-  // compute precip from full set (so first row in range has a predecessor)
-  const pre = OBS.map(o=>{
-    let p=null;
-    if(o.precip_accum_mm!=null && prevAcc!=null){ const d=o.precip_accum_mm-prevAcc; p = d<0 ? o.precip_accum_mm : d; }
-    if(o.precip_accum_mm!=null) prevAcc=o.precip_accum_mm;
-    return {...o, p_obs:p};
+  return OBS.map(o=>{
+    const h=floorHour(o.t), g=k=>fcAt(h,o.t,state.lead,k);
+    return {o, h, F:{T:g("T"),RH:g("RH"),WS:g("WS"),WD:g("WD"),WG:g("WG"),QPF:g("QPF"),PoP:g("PoP")}};
   });
-  for(const o of pre){
-    if(o.t<since) continue;
-    const h=floorHour(o.t), L=state.lead;
-    const g=k=>fcAt(h,o.t,L,k);
-    const F={T:g("T"),Td:g("Td"),RH:g("RH"),WS:g("WS"),WD:g("WD"),WG:g("WG"),QPF:g("QPF"),PoP:g("PoP"),SKY:g("SKY")};
-    rows.push({o, h, F});
-  }
-  return rows;
+}
+/* the newest forecast from now onward (7 days when available) */
+function futureSeries(){
+  const out=[]; if(!LATEST) return out;
+  const f=LATEST.fcst, now=Date.now();
+  f.t.forEach((s,i)=>{ const t=Date.parse(s); if(t>=floorHour(now)) out.push({t:t+HOUR/2, i, f}); });
+  return out;
 }
 
-/* ---------- variable defs (all values converted to display units) ---------- */
+/* ---------- accuracy variables (display units) ---------- */
 function vars(){
   return [
-    {id:"temp", name:"Temperature", unit:U.tUnit(), dec:0, sdec:1,
-      obs:o=>U.temp(o.temp_c), fc:F=>U.temp(F.T?.v), fk:"T", fconv:v=>U.temp(v)},
-    {id:"rh", name:"Relative humidity", unit:"%", dec:0, sdec:1, yMin:0, yMax:100,
-      obs:o=>o.rh, fc:F=>F.RH?.v, fk:"RH", fconv:v=>v},
-    {id:"wind", name:"Wind speed", unit:U.wUnit(), dec:0, sdec:1, yMin:0,
-      obs:o=>U.windMs(o.wind_ms), fc:F=>U.windKmh(F.WS?.v), fk:"WS", fconv:v=>U.windKmh(v)},
-    {id:"gust", name:"Wind gust", unit:U.wUnit(), dec:0, sdec:1, yMin:0,
-      obs:o=>U.windMs(o.gust_ms), fc:F=>U.windKmh(F.WG?.v), fk:"WG", fconv:v=>U.windKmh(v)},
-    {id:"dir", name:"Wind direction (wind & gust)", unit:"°", dec:0, sdec:0, circ:true, yMin:0, yMax:360,
-      obs:o=>o.wind_dir, fc:F=>F.WD?.v, fk:"WD", fconv:v=>v},
-    {id:"precip", name:"Precipitation (hourly)", unit:U.pUnit(), dec:U.pDec(), sdec:U.pDec()+1, yMin:0, bars:true,
-      obs:o=>U.pr(o.p_obs), fc:F=>U.pr(F.QPF?.v), fk:"QPF", fconv:v=>U.pr(v)},
+    {id:"temp", name:"Temperature", unit:U.tUnit(), sdec:1, obs:o=>U.temp(o.temp_c), fc:F=>U.temp(F.T?.v)},
+    {id:"wind", name:"Wind speed", unit:U.wUnit(), sdec:1, obs:o=>U.windMs(o.wind_ms), fc:F=>U.windKmh(F.WS?.v)},
+    {id:"gust", name:"Wind gust", unit:U.wUnit(), sdec:1, obs:o=>U.windMs(o.gust_ms), fc:F=>U.windKmh(F.WG?.v)},
+    {id:"dir", name:"Wind direction", unit:"°", sdec:0, circ:true, obs:o=>o.wind_dir, fc:F=>F.WD?.v},
+    {id:"precip", name:"Precipitation (hourly)", unit:U.pUnit(), sdec:U.pDec()+1, obs:o=>U.pr(o.p_obs), fc:F=>U.pr(F.QPF?.v)},
+    {id:"rh", name:"Relative humidity", unit:"%", sdec:1, obs:o=>o.rh, fc:F=>F.RH?.v},
   ];
 }
-
 function stats(rows, v){
   const e=[];
   for(const r of rows){
@@ -250,65 +252,48 @@ function stats(rows, v){
     e.push(v.circ? dirDiff(f,o) : f-o);
   }
   if(!e.length) return {n:0};
-  const n=e.length, bias=d3.mean(e), mae=d3.mean(e,Math.abs), rmse=Math.sqrt(d3.mean(e,x=>x*x));
-  return {n,bias,mae,rmse};
+  return {n:e.length, bias:d3.mean(e), mae:d3.mean(e,Math.abs), rmse:Math.sqrt(d3.mean(e,x=>x*x))};
 }
 
-/* ---------- render ---------- */
-function setStatus(){
-  const fr=document.getElementById("freshness"), ri=document.getElementById("runinfo");
-  const last=OBS[OBS.length-1];
-  if(!last){ fr.textContent=""; fr.append(dot("var(--muted)"),"No observations yet"); }
-  else{
-    const age=(Date.now()-last.t)/60000;
-    const c= age<=90?"var(--good)": age<=180?"var(--warn)":"var(--bad)";
-    const txt= age<=90?"Current": age<=180?"Delayed":"Stale";
-    fr.textContent=""; fr.append(dot(c), `${txt} · obs ${fmtT(new Date(last.t))} (${age<90?Math.round(age)+" min":Math.round(age/60)+" h"} ago)`);
-  }
-  const lr=DATA&&DATA.status;
-  ri.textContent="";
-  if(lr){
-    const s=document.createElement("span");
-    const ok=lr.wxm_ok&&lr.nws_ok;
-    s.textContent = `Last collection ${fmtT(new Date(lr.at))} · ${ok?"both sources OK": (lr.errors||[]).join(" | ")||"partial"}`;
-    if(!ok) s.className="err";
-    ri.append(s);
-  }
-  const fr2=latestRun();
-  if(fr2?.fcst?.issued){ const s2=document.createElement("span"); s2.textContent=`NWS forecast issued ${fmtT(new Date(fr2.fcst.issued))} · grid ${fr2.fcst.grid||""}`; ri.append(document.createElement("br"), s2); }
-  if(loadErr){ const e=document.createElement("span"); e.className="err"; e.textContent=loadErr; ri.append(document.createElement("br"), e); }
-}
-function dot(c){ const d=document.createElement("span"); d.className="dot"; d.style.background=c; return d; }
-
+/* ---------- small DOM helpers ---------- */
 function el(tag, attrs={}, ...kids){
   const e=document.createElement(tag);
   for(const [k,v] of Object.entries(attrs)){ if(k==="class") e.className=v; else if(k==="style") e.setAttribute("style",v); else e.setAttribute(k,v); }
-  for(const k of kids){ if(k==null) continue; e.append(k.nodeType?k:document.createTextNode(String(k))); }
+  for(const k of kids){ if(k==null||k===false) continue; e.append(k.nodeType?k:document.createTextNode(String(k))); }
   return e;
 }
-function arrowSvg(deg){
-  // arrow points the way the wind blows TO (from-direction + 180)
-  const ns="http://www.w3.org/2000/svg", s=document.createElementNS(ns,"svg");
-  s.setAttribute("viewBox","-12 -12 24 24"); s.setAttribute("class","arrow"); s.setAttribute("aria-hidden","true");
-  const p=document.createElementNS(ns,"path");
-  p.setAttribute("d","M0,-9 L5,4 L0,1.5 L-5,4 Z"); p.setAttribute("fill","var(--text2)");
-  p.setAttribute("transform",`rotate(${(deg+180)%360})`);
-  s.append(p); return s;
+function dot(c){ const d=document.createElement("span"); d.className="dot"; d.style.background=c; return d; }
+const swatch = (color, style="solid") => el("i",{class:"sw",style:`border-color:${color};border-top-style:${style}`});
+function windGlyph(color, hollow){
+  const s=sv("svg",{viewBox:"-9 -9 18 18",width:15,height:15,"aria-hidden":"true"});
+  s.append(sv("path",{d:ARROW_D,transform:"rotate(45)",fill:hollow?"none":color,stroke:color,"stroke-width":hollow?1.4:0,"stroke-linejoin":"round"}));
+  return s;
 }
 
-/* ---------- wind speed colour bands (thresholds in knots) ---------- */
-const WIND_BANDS_KT = [5, 10];               // < 5 green, 5–10 yellow, > 10 red
-const toKt = ms => ms==null?null:ms*1.943844;
-function windCls(ms){ const k=toKt(ms); if(k==null||!isFinite(k)) return "wc-na"; return k<WIND_BANDS_KT[0]?"wc-lo":k<=WIND_BANDS_KT[1]?"wc-mid":"wc-hi"; }
-const windColor = ms => `var(--${windCls(ms)})`;
-const SVGNS="http://www.w3.org/2000/svg";
-function sv(tag, attrs={}){ const e=document.createElementNS(SVGNS,tag); for(const [k,v] of Object.entries(attrs)) e.setAttribute(k,v); return e; }
-// arrow glyph pointing "up" (north) before rotation; rotated to point DOWNWIND (from-direction + 180)
-const ARROW_D = "M0,-8 L5,4 L0,1.5 L-5,4 Z";
+/* ---------- status line ---------- */
+function setStatus(){
+  const fr=document.getElementById("freshness"), ri=document.getElementById("runinfo");
+  const last=OBS[OBS.length-1];
+  fr.textContent="";
+  if(!last) fr.append(dot("var(--muted)"),"No observations yet");
+  else{
+    const age=(Date.now()-last.t)/60000;
+    const c= age<=90?"var(--good)": age<=180?"var(--warn)":"var(--bad)";
+    fr.append(dot(c), `${age<=90?"Current":age<=180?"Delayed":"Stale"} · obs ${fmtT(new Date(last.t))} (${age<90?Math.round(age)+" min":Math.round(age/60)+" h"} ago)`);
+  }
+  ri.textContent="";
+  const st=DATA&&DATA.status;
+  if(st){
+    const ok=st.wxm_ok&&st.nws_ok;
+    ri.append(el("span",{class:ok?"":"err"}, `Last collection ${fmtT(new Date(st.at))} · ${ok?"both sources OK": (st.errors||[]).join(" | ")||"partial"}`));
+  }
+  if(LATEST?.fcst?.issued) ri.append(el("br"), el("span",{}, `NWS forecast issued ${fmtT(new Date(LATEST.fcst.issued))} · grid ${LATEST.fcst.grid||""}`));
+  if(loadErr) ri.append(el("br"), el("span",{class:"err"},loadErr));
+}
 
 /* ---------- current-conditions wind dial ---------- */
 function windDial(last, Fnow){
-  const R=64, s=sv("svg",{viewBox:"-92 -92 184 184",class:"dial",role:"img",
+  const R=60, s=sv("svg",{viewBox:"-86 -86 172 172",class:"dial",role:"img",
     "aria-label":`Wind from ${fmt(last.wind_dir,0)} degrees at ${fmt(U.windMs(last.wind_ms),0)} ${U.wUnit()}, gusts ${fmt(U.windMs(last.gust_ms),0)}`});
   const pt=(deg,r)=>[r*Math.sin(deg*Math.PI/180), -r*Math.cos(deg*Math.PI/180)];
   s.append(sv("circle",{r:R,fill:"none",stroke:"var(--border)","stroke-width":1.5}));
@@ -317,12 +302,9 @@ function windDial(last, Fnow){
     s.append(sv("line",{x1,y1,x2,y2,stroke:major?"var(--text2)":"var(--muted)","stroke-width":major?1.5:1,opacity:major?1:.6}));
   }
   [["N",0],["E",90],["S",180],["W",270]].forEach(([l,d])=>{ const [x,y]=pt(d,R+13); const t=sv("text",{x,y,"text-anchor":"middle","dominant-baseline":"central",class:"dial-card"}); t.textContent=l; s.append(t); });
-  // last 6 h of observed directions: fading dots on the ring (shows how steady the wind has been)
   const hist=OBS.filter(o=>o.t>=last.t-6*HOUR && o.t<last.t && o.wind_dir!=null);
   hist.forEach((o,i)=>{ const [x,y]=pt(o.wind_dir,R); s.append(sv("circle",{cx:x,cy:y,r:3.2,fill:windColor(o.wind_ms),opacity:(0.25+0.6*(i+1)/hist.length).toFixed(2)})); });
-  // NWS forecast direction: hollow marker outside the ring
   if(Fnow.WD){ const g=sv("g",{transform:`rotate(${Fnow.WD.v}) translate(0,${-(R+3)})`}); g.append(sv("path",{d:"M0,0 L-5,-9 L5,-9 Z",fill:"none",stroke:"var(--fc)","stroke-width":1.6,"stroke-linejoin":"round"})); s.append(g); }
-  // observed: arrowhead sitting on the ring at the FROM direction, pointing inward (downwind)
   if(last.wind_dir!=null){
     const g=sv("g",{transform:`rotate(${last.wind_dir}) translate(0,${-R+2})`});
     g.append(sv("path",{d:"M0,14 L-9,-6 L0,-1 L9,-6 Z",fill:windColor(last.wind_ms),stroke:"var(--surface)","stroke-width":1.5,"stroke-linejoin":"round"}));
@@ -333,127 +315,250 @@ function windDial(last, Fnow){
   const gu=sv("text",{x:0,y:32,"text-anchor":"middle",class:"dial-gust"}); gu.textContent=`G ${fmt(U.windMs(last.gust_ms),0)}`; s.append(gu);
   return s;
 }
-
-/* ---------- small sparkline for the temperature tile ---------- */
-function drawSpark(container, last, lr){
-  const W=Math.max(160, container.clientWidth||300), H=46, m={t:4,r:4,b:4,l:4};
-  const now=Date.now(), t0=now-24*HOUR, t1=now+12*HOUR;
-  const obs=OBS.filter(o=>o.t>=t0 && o.temp_c!=null).map(o=>({t:o.t,y:U.temp(o.temp_c)}));
-  const fut=[]; if(lr) lr.fcst.t.forEach((s,i)=>{ const t=Date.parse(s)+HOUR/2; const v=lr.fcst.T?.[i]; if(t>=now-HOUR && t<=t1 && v!=null) fut.push({t,y:U.temp(v)}); });
-  const ys=[...obs,...fut].map(d=>d.y); if(ys.length<2) return;
-  const x=d3.scaleTime().domain([t0,t1]).range([m.l,W-m.r]), y=d3.scaleLinear().domain(d3.extent(ys)).nice().range([H-m.b,m.t]);
-  const svg=d3.select(container).append("svg").attr("width",W).attr("height",H).attr("aria-hidden","true");
-  svg.append("line").attr("x1",x(now)).attr("x2",x(now)).attr("y1",0).attr("y2",H).attr("stroke","var(--border)").attr("stroke-dasharray","2 3");
-  const ln=d3.line().x(d=>x(d.t)).y(d=>y(d.y)).curve(d3.curveMonotoneX);
-  svg.append("path").datum(fut).attr("d",ln).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",2).attr("stroke-dasharray","4 3");
-  svg.append("path").datum(obs).attr("d",ln).attr("fill","none").attr("stroke","var(--obs)").attr("stroke-width",2);
-  if(obs.length){ const l=obs[obs.length-1]; svg.append("circle").attr("cx",x(l.t)).attr("cy",y(l.y)).attr("r",3.5).attr("fill","var(--obs)").attr("stroke","var(--surface)").attr("stroke-width",2); }
+function precip24(last){
+  const since=last.t-24*HOUR; let obs=0, any=false, fc=0;
+  for(const o of OBS) if(o.t>since && o.p_obs!=null){ obs+=o.p_obs; any=true; }
+  for(let h=floorHour(since)+HOUR; h<=floorHour(last.t); h+=HOUR){ const f=fcAt(h,h,0,"QPF"); if(f) fc+=f.v; }
+  return {obs:any?obs:null, fc};
 }
 
+/* ---------- tiles (left column) ---------- */
+function tiles(last){
+  const h=floorHour(last.t), Fnow={};
+  ["T","RH","WS","WD","WG","PoP"].forEach(k=>Fnow[k]=fcAt(h,Date.now(),0,k));
+  const T={};
+  T.temp=el("div",{class:"tile row-temp",id:"cc-temp"},
+    el("div",{class:"lbl"},"Temperature"),
+    el("div",{class:"val xl"}, fmt(U.temp(last.temp_c),1), el("span",{class:"u"},U.tUnit())),
+    el("div",{class:"fc"}, "NWS forecast ", el("b",{}, Fnow.T?fmt(U.temp(Fnow.T.v),0)+U.tUnit():"—")));
+
+  const fW=Fnow.WS?U.windKmh(Fnow.WS.v):null, fG=Fnow.WG?U.windKmh(Fnow.WG.v):null;
+  T.wind=el("div",{class:"tile row-wind",id:"cc-wind"},
+    el("div",{class:"lbl"},"Wind"),
+    windDial(last,Fnow),
+    el("div",{class:"wind-txt"},
+      el("span",{class:"k"},"From"), el("span",{class:"v"}, el("b",{},`${fmt(last.wind_dir,0)}° ${card(last.wind_dir)}`)),
+      el("span",{class:"k"},"Speed"), el("span",{class:"v"}, el("b",{},`${fmt(U.windMs(last.wind_ms),0)} ${U.wUnit()}`), el("i",{class:"chip "+windCls(last.wind_ms)})),
+      el("span",{class:"k"},"Gust"), el("span",{class:"v"}, el("b",{},`${fmt(U.windMs(last.gust_ms),0)} ${U.wUnit()}`), el("i",{class:"chip "+windCls(last.gust_ms)})),
+      el("span",{class:"k"},"NWS"), el("span",{class:"v fcl"}, Fnow.WD||Fnow.WS ? `${fmt(Fnow.WD?.v,0)}° ${card(Fnow.WD?.v)} @ ${fmt(fW,0)}${fG!=null?" G "+fmt(fG,0):""} ${U.wUnit()}` : "—")));
+  T.wind.title="Arrow on the ring: where the wind is coming from. Dots: last 6 h of direction. Hollow marker: NWS forecast direction.";
+
+  const p=precip24(last);
+  T.precip=el("div",{class:"tile row-precip",id:"cc-precip"},
+    el("div",{class:"lbl"},el("span",{},"Precipitation"), last.icon?el("span",{class:"icon"},last.icon.replace(/_/g," ")):null),
+    el("div",{class:"val"}, fmt(U.pr(last.precip_rate_mmh),U.pDec()), el("span",{class:"u"},U.pUnit()+"/h")),
+    el("div",{class:"fc"}, `Last 24 h: ${fmt(U.pr(p.obs),U.pDec())} ${U.pUnit()} observed · ${fmt(U.pr(p.fc),U.pDec())} forecast`),
+    el("div",{class:"fc"}, "NWS chance this hour ", el("b",{}, Fnow.PoP?fmt(Fnow.PoP.v,0)+"%":"—")));
+
+  T.rh=el("div",{class:"tile row-rh",id:"cc-rh"},
+    el("div",{class:"lbl"},"Relative humidity"),
+    el("div",{class:"val"}, fmt(last.rh,0), el("span",{class:"u"},"%")),
+    el("div",{class:"fc"}, "NWS forecast ", el("b",{}, Fnow.RH?fmt(Fnow.RH.v,0)+"%":"—")));
+
+  const p3=OBS.filter(o=>o.pressure_hpa!=null && o.t<=last.t-2.5*HOUR && o.t>=last.t-3.5*HOUR).pop();
+  const dp = p3&&last.pressure_hpa!=null ? last.pressure_hpa-p3.pressure_hpa : null;
+  T.pres=el("div",{class:"tile row-pres",id:"cc-pressure"},
+    el("div",{class:"lbl"},"Pressure (station)"),
+    el("div",{class:"val"}, fmt(last.pressure_hpa,1), el("span",{class:"u"},"hPa")),
+    el("div",{class:"fc"}, `${fmt(last.pressure_hpa!=null?last.pressure_hpa*0.0295300:null,2)} inHg`),
+    dp!=null ? el("div",{class:"fc"}, `${dp>0.3?"Rising":dp<-0.3?"Falling":"Steady"} ${sgn(dp,1)} hPa / 3 h`) : null);
+  return T;
+}
+
+/* ---------- scrollable plots (right column) ---------- */
+let SCROLLERS = [], TIME = null, syncing = false;
+function timeFrame(visW){
+  const now=Date.now(), pph=visW/state.range;                       // pixels per hour
+  const fut=futureSeries();
+  let t0=Math.min(OBS.length?OBS[0].t:now, viewStart, now-LEFT_PAD_H*HOUR) - HOUR;
+  let t1=Math.max(fut.length?fut[fut.length-1].t+HOUR/2:now, viewStart+state.range*HOUR, now+HOUR);
+  t0=floorHour(t0); t1=Math.ceil(t1/HOUR)*HOUR;
+  const W=Math.round((t1-t0)/HOUR*pph);
+  return {now, pph, t0, t1, W, x:d3.scaleTime().domain([t0,t1]).range([0,W])};
+}
+function cellShell(id, cls, title, legend){
+  const plot=el("div",{class:"plot"}), cell=el("div",{class:"cell "+cls,id:"chart-"+id}, el("div",{class:"cellhead"}, el("h3",{},title), legend), plot);
+  return {cell, plot};
+}
+/* builds y-axis + scrolling SVG inside a cell; returns drawing context */
+function frame(plot, yDomain, opts={}){
+  const H=Math.max(140, plot.clientHeight), m={t:16,b:22};
+  const pin=el("div",{class:"plot-in"}), ya=el("div",{class:"yaxis"}), sc=el("div",{class:"scroller"}), inner=el("div",{class:"inner"});
+  sc.append(inner); pin.append(ya, sc); plot.append(pin);
+  const {x, W, now}=TIME;
+  const y=d3.scaleLinear().domain(yDomain).range([H-m.b, m.t]); if(!opts.noNice) y.nice();
+  d3.select(ya).append("svg").attr("width",44).attr("height",H).append("g").attr("class","axis").attr("transform","translate(43,0)")
+    .call(d3.axisLeft(y).ticks(opts.ticks||5).tickSizeOuter(0).tickFormat(opts.yfmt||null));
+  inner.style.width=W+"px";
+  const svg=d3.select(inner).append("svg").attr("width",W).attr("height",H);
+  svg.append("g").selectAll("line").data(y.ticks(opts.ticks||5)).join("line").attr("x1",0).attr("x2",W).attr("y1",d=>y(d)).attr("y2",d=>y(d)).attr("stroke","var(--grid)");
+  // midnight separators
+  const days=d3.timeHour.every(1).range(new Date(TIME.t0), new Date(TIME.t1)).filter(d=>Number(hpH.format(d))%24===0);
+  svg.append("g").selectAll("line").data(days).join("line").attr("x1",d=>x(d)).attr("x2",d=>x(d)).attr("y1",m.t).attr("y2",H-m.b).attr("stroke","var(--border)");
+  const ticks = x.ticks(d3.timeHour.every(TIME.pph>=30?3:TIME.pph>=12?6:12));
+  svg.append("g").attr("class","axis").attr("transform",`translate(0,${H-m.b})`).call(d3.axisBottom(x).tickValues(ticks).tickFormat(tickFmt).tickSizeOuter(0));
+  const layer=svg.append("g");
+  // "now" marker on top of data
+  const nowG=svg.append("g").attr("pointer-events","none");
+  nowG.append("line").attr("x1",x(now)).attr("x2",x(now)).attr("y1",m.t-6).attr("y2",H-m.b).attr("stroke","var(--now)").attr("stroke-width",1.5).attr("stroke-opacity",.55);
+  nowG.append("text").attr("x",x(now)+4).attr("y",m.t-4).attr("fill","var(--text2)").attr("font-size",10.5).attr("font-weight",600).text("Now");
+  SCROLLERS.push(sc);
+  return {svg, layer, x, y, H, m, W, inner, sc};
+}
+function hover(ctx, points, describe){
+  const {svg,x,m,H,W,inner,sc}=ctx;
+  const tip=el("div",{class:"tip"}); inner.append(tip);
+  const cross=svg.append("line").attr("y1",m.t).attr("y2",H-m.b).attr("stroke","var(--muted)").style("display","none").attr("pointer-events","none");
+  const pts=points.slice().sort((a,b)=>a.t-b.t), bis=d3.bisector(d=>d.t).center;
+  svg.append("rect").attr("x",0).attr("y",m.t).attr("width",W).attr("height",H-m.t-m.b).attr("fill","transparent")
+    .on("pointermove",ev=>{
+      if(!pts.length) return;
+      const [px]=d3.pointer(ev); const d=pts[bis(pts,x.invert(px))]; if(!d || Math.abs(x(d.t)-px)>Math.max(30,TIME.pph*1.5)){ tip.style.display="none"; cross.style("display","none"); return; }
+      cross.style("display",null).attr("x1",x(d.t)).attr("x2",x(d.t));
+      tip.textContent=""; describe(d).forEach(n=>tip.append(n)); tip.style.display="block";
+      const tw=tip.offsetWidth, visR=sc.scrollLeft+sc.clientWidth; let left=x(d.t)+12; if(left+tw>visR-4) left=x(d.t)-tw-12;
+      tip.style.left=Math.max(sc.scrollLeft+2,left)+"px"; tip.style.top="6px";
+    })
+    .on("pointerleave",()=>{ tip.style.display="none"; cross.style("display","none"); });
+}
+const tRow=(label, color, style, text)=>el("div",{class:"r"}, color?swatch(color,style):null, label?label+" ":"", text);
+const lineGen=(x,y,k,curve=d3.curveMonotoneX)=>d3.line().defined(d=>d[k]!=null&&isFinite(d[k])).x(d=>x(d.t)).y(d=>y(d[k])).curve(curve);
+function extentPad(vals, minSpan, floor){
+  const v=vals.filter(z=>z!=null&&isFinite(z)); if(!v.length) return [floor??0, (floor??0)+minSpan];
+  let lo=d3.min(v), hi=d3.max(v); const pad=Math.max((hi-lo)*0.12, minSpan/4);
+  lo-=pad; hi+=pad; if(floor!=null) lo=Math.max(floor,lo); if(hi-lo<minSpan) hi=lo+minSpan; return [lo,hi];
+}
+
+/* generic observed-vs-forecast line chart */
+function lineChart(plot, rows, spec){
+  const fut=spec.fk? futureSeries().map(p=>({t:p.t, y:spec.fconv(p.f[spec.fk]?.[p.i])})) : [];
+  const obs=rows.map(r=>({t:r.o.t, y:spec.obs(r.o), f:spec.fc?spec.fc(r.F):null, r}));
+  const dom=spec.domain || extentPad([...obs.map(p=>p.y),...obs.map(p=>p.f),...fut.map(p=>p.y)], spec.minSpan||4, spec.floor);
+  const ctx=frame(plot, dom, {noNice:!!spec.domain, yfmt:spec.yfmt}); const {layer,x,y}=ctx;
+  if(spec.fc) layer.append("path").datum(obs).attr("d",lineGen(x,y,"f")).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
+  if(fut.length) layer.append("path").datum(fut).attr("d",lineGen(x,y,"y")).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
+  layer.append("path").datum(obs).attr("d",lineGen(x,y,"y")).attr("fill","none").attr("stroke","var(--obs)").attr("stroke-width",2);
+  const lastO=obs.filter(p=>p.y!=null).pop(); if(lastO) layer.append("circle").attr("cx",x(lastO.t)).attr("cy",y(lastO.y)).attr("r",3.5).attr("fill","var(--obs)").attr("stroke","var(--surface)").attr("stroke-width",2);
+  const u=spec.unit, d=spec.dec;
+  hover(ctx, [...obs.map(p=>({...p,k:"o"})), ...fut.map(p=>({...p,k:"u"}))], p=> p.k==="o"
+    ? [el("div",{class:"t"},fmtT(new Date(p.t))), tRow("Observed","var(--obs)","solid",`${fmt(p.y,d)}${u}`),
+       spec.fc?tRow("NWS","var(--fc)","dashed",`${fmt(p.f,d)}${u}`):null,
+       spec.fc&&p.y!=null&&p.f!=null?el("div",{class:"r",style:"color:var(--text2)"},`Fcst − obs ${sgn(p.f-p.y,d)}${u}`):null].filter(Boolean)
+    : [el("div",{class:"t"},fmtT(new Date(p.t-HOUR/2))+" (forecast)"), tRow("NWS","var(--fc-soft)","dashed",`${fmt(p.y,d)}${u}`)]);
+}
+
+/* precipitation: observed bars + NWS QPF step line */
+function precipChart(plot, rows){
+  const fut=futureSeries().map(p=>({t:p.t-HOUR/2, y:U.pr(p.f.QPF?.[p.i]), pop:p.f.PoP?.[p.i]}));
+  const obs=rows.map(r=>({t:r.o.t, y:U.pr(r.o.p_obs), f:U.pr(r.F.QPF?.v), pop:r.F.PoP?.v}));
+  const hi=d3.max([...obs.map(p=>p.y),...obs.map(p=>p.f),...fut.map(p=>p.y)].filter(v=>v!=null))||0;
+  const ctx=frame(plot,[0, Math.max(hi*1.15, state.pu==="in"?0.04:1)]); const {layer,x,y}=ctx;
+  const bw=Math.max(2,Math.min(16,TIME.pph*0.7));
+  layer.selectAll("rect.o").data(obs.filter(p=>p.y>0)).join("rect").attr("x",p=>x(p.t)-bw/2).attr("width",bw).attr("y",p=>y(p.y)).attr("height",p=>Math.max(0,y(0)-y(p.y))).attr("rx",Math.min(3,bw/2)).attr("fill","var(--obs)");
+  const fobs=obs.map(p=>({t:floorHour(p.t),f:p.f}));
+  layer.append("path").datum(fobs).attr("d",lineGen(x,y,"f",d3.curveStepAfter)).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
+  layer.append("path").datum(fut).attr("d",lineGen(x,y,"y",d3.curveStepAfter)).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
+  const u=" "+U.pUnit(), d=U.pDec()+1;
+  hover(ctx,[...obs.map(p=>({...p,k:"o"})),...fut.map(p=>({...p,t:p.t+HOUR/2,k:"u"}))], p=> p.k==="o"
+    ? [el("div",{class:"t"},fmtT(new Date(p.t))), tRow("Observed","var(--obs)","solid",`${fmt(p.y,d)}${u}`), tRow("NWS QPF","var(--fc)","dashed",`${fmt(p.f,d)}${u}/h`), p.pop!=null?el("div",{class:"r",style:"color:var(--muted)"},`Chance ${fmt(p.pop,0)}%`):null].filter(Boolean)
+    : [el("div",{class:"t"},fmtT(new Date(p.t-HOUR/2))+" (forecast)"), tRow("NWS QPF","var(--fc-soft)","dashed",`${fmt(p.y,d)}${u}/h`), p.pop!=null?el("div",{class:"r",style:"color:var(--muted)"},`Chance ${fmt(p.pop,0)}%`):null].filter(Boolean));
+}
+
+/* wind: arrows at (time, speed) pointing downwind, gust as a line, NWS dashed/dotted */
+function windChart(plot, rows){
+  const obs=rows.map(r=>({t:r.o.t, s:U.windMs(r.o.wind_ms), g:U.windMs(r.o.gust_ms), d:r.o.wind_dir, sms:r.o.wind_ms,
+    fs:r.F.WS?U.windKmh(r.F.WS.v):null, fg:r.F.WG?U.windKmh(r.F.WG.v):null, fd:r.F.WD?.v}));
+  const fut=futureSeries().map(p=>{ const ws=p.f.WS?.[p.i], wg=p.f.WG?.[p.i]; return {t:p.t, s:U.windKmh(ws), g:U.windKmh(wg), d:p.f.WD?.[p.i], sms:ws==null?null:ws/3.6}; });
+  const ys=[...obs.flatMap(p=>[p.s,p.g,p.fs,p.fg]), ...fut.flatMap(p=>[p.s,p.g])].filter(v=>v!=null&&isFinite(v));
+  const ctx=frame(plot,[0, Math.max(ys.length?d3.max(ys)*1.12:1, U.windMs(11/1.943844))]); const {layer,x,y,W}=ctx;
+  WIND_BANDS_KT.forEach((k,i)=>{ const yy=y(U.windMs(k/1.943844));
+    layer.append("line").attr("x1",0).attr("x2",W).attr("y1",yy).attr("y2",yy).attr("stroke",i?"var(--wc-hi)":"var(--wc-mid)").attr("stroke-opacity",.5).attr("stroke-dasharray","1 3"); });
+  const L=k=>lineGen(x,y,k);
+  layer.append("path").datum(obs).attr("d",L("fs")).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",1.6).attr("stroke-dasharray","5 3");
+  layer.append("path").datum(obs).attr("d",L("fg")).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",1.5).attr("stroke-dasharray","1.5 3").attr("stroke-linecap","round");
+  layer.append("path").datum(fut).attr("d",L("s")).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",1.6).attr("stroke-dasharray","5 3");
+  layer.append("path").datum(fut).attr("d",L("g")).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",1.5).attr("stroke-dasharray","1.5 3").attr("stroke-linecap","round");
+  layer.append("path").datum(obs).attr("d",L("g")).attr("fill","none").attr("stroke","var(--obs)").attr("stroke-width",1.6);
+  layer.append("path").datum(obs).attr("d",L("s")).attr("fill","none").attr("stroke","var(--muted)").attr("stroke-width",1).attr("stroke-opacity",.6);
+  // glyphs, thinned so they never overlap
+  const thin=pts=>{ const k=Math.max(1,Math.ceil(15/TIME.pph)); return pts.filter((_,i)=>(pts.length-1-i)%k===0); };
+  const arrow=(p,hollow)=>{
+    if(p.s==null) return;
+    if(p.d==null){ layer.append("circle").attr("cx",x(p.t)).attr("cy",y(p.s)).attr("r",3.5).attr("fill",windColor(p.sms)); return; }
+    layer.append("path").attr("d",ARROW_D).attr("transform",`translate(${x(p.t)},${y(p.s)}) rotate(${(p.d+180)%360})`)
+      .attr("fill",hollow?"var(--surface)":windColor(p.sms)).attr("stroke",hollow?windColor(p.sms):"var(--surface)").attr("stroke-width",hollow?1.5:1).attr("stroke-linejoin","round");
+  };
+  thin(fut).forEach(p=>arrow(p,true)); thin(obs).forEach(p=>arrow(p,false));
+  const u=" "+U.wUnit(), w=(d,s,g)=>`${d!=null?fmt(d,0)+"° "+card(d):"—"} @ ${fmt(s,0)}${g!=null?" G "+fmt(g,0):""}${u}`;
+  hover(ctx,[...obs.map(p=>({...p,k:"o"})),...fut.map(p=>({...p,k:"u"}))], p=> p.k==="o"
+    ? [el("div",{class:"t"},fmtT(new Date(p.t))), el("div",{class:"r"},el("i",{class:"chip "+windCls(p.sms)}),"Observed "+w(p.d,p.s,p.g)), tRow("NWS","var(--fc)","dashed",w(p.fd,p.fs,p.fg))]
+    : [el("div",{class:"t"},fmtT(new Date(p.t-HOUR/2))+" (forecast)"), el("div",{class:"r"},el("i",{class:"chip "+windCls(p.sms)}),"NWS "+w(p.d,p.s,p.g))]);
+}
+
+/* ---------- accuracy table: observations currently in view ---------- */
+function renderAccuracy(){
+  const box=document.getElementById("acc"); if(!box) return;
+  const t0=viewStart, t1=Math.min(Date.now(), viewStart+state.range*HOUR);
+  const rows=ROWS.filter(r=>r.o.t>=t0 && r.o.t<=t1);
+  const leadLbl = state.lead? `${state.lead} h lead`:"latest forecast";
+  document.getElementById("acc-sub").textContent = t1>t0
+    ? `observations in view, ${fmtT(new Date(t0))} – ${fmtT(new Date(t1))} · ${leadLbl} · error = forecast − observed`
+    : `no observations in view — scroll left or Reset to now`;
+  box.textContent="";
+  const tb=el("table"), hr=el("tr");
+  ["Variable","Samples","Bias","Mean abs error","RMS error"].forEach(h=>hr.append(el("th",{},h)));
+  tb.append(el("thead",{},hr));
+  const tbody=el("tbody");
+  vars().forEach(v=>{
+    const s=stats(rows,v), u=v.unit==="%"?" pts":(v.unit==="°"?"°":" "+v.unit);
+    tbody.append(el("tr",{}, el("td",{},v.name), el("td",{},s.n||0),
+      el("td",{},s.n?sgn(s.bias,v.sdec)+u:"—"), el("td",{},s.n?d3.format(`.${v.sdec}f`)(s.mae)+u:"—"), el("td",{},s.n?d3.format(`.${v.sdec}f`)(s.rmse)+u:"—")));
+  });
+  tb.append(tbody); box.append(tb);
+}
+
+/* ---------- page ---------- */
+let ROWS=[];
 function render(){
   setStatus();
   const main=document.getElementById("main");
-  const wasOpen = state.tableOpen;
-  main.textContent="";
+  main.textContent=""; SCROLLERS=[];
   if(!OBS.length && !RUNS.length){
     main.append(el("div",{class:"empty"}, "No data collected yet. The hourly GitHub Actions workflow will add the first observation and forecast snapshot."));
     return;
   }
-  const rows=buildRows(), V=vars(), lr=latestRun();
+  ROWS=buildRows();
   const last=OBS[OBS.length-1];
-  const after=[]; // drawings that need the layout in place
-
-  /* ===== current conditions: temp + wind (large), precip + pressure (small) ===== */
-  main.append(el("h2",{},"Current conditions", last? el("small",{},"as of "+fmtT(new Date(last.t))):null));
-  if(last){
-    const h=floorHour(last.t), Fnow={};
-    ["T","RH","WS","WD","WG","QPF","PoP"].forEach(k=>Fnow[k]=fcAt(h,Date.now(),0,k));
-    const cc=el("div",{class:"cc"});
-
-    // temperature
-    const tT=el("div",{class:"tile big",id:"cc-temp"});
-    tT.append(el("div",{class:"lbl"},"Temperature"));
-    tT.append(el("div",{class:"val xl"}, fmt(U.temp(last.temp_c),1), el("span",{class:"u"},U.tUnit())));
-    tT.append(el("div",{class:"fc"}, "NWS forecast ", el("b",{}, Fnow.T?fmt(U.temp(Fnow.T.v),0)+U.tUnit():"—"),
-      "  ·  Humidity ", el("b",{}, fmt(last.rh,0)+"%")));
-    const sp=el("div",{class:"spark"}); tT.append(sp);
-    tT.append(el("div",{class:"spark-key"}, el("i",{class:"sw",style:"border-color:var(--obs)"}),"past 24 h ", el("i",{class:"sw",style:"border-color:var(--fc-soft);border-top-style:dashed"}),"NWS next 12 h"));
-    after.push(()=>drawSpark(sp,last,lr));
-    cc.append(tT);
-
-    // wind
-    const tW=el("div",{class:"tile big wind",id:"cc-wind"});
-    tW.append(el("div",{class:"lbl"},"Wind"));
-    const wrow=el("div",{class:"wind-row"});
-    wrow.append(windDial(last,Fnow));
-    const wtx=el("div",{class:"wind-txt"});
-    wtx.append(el("div",{class:"wl"}, el("span",{class:"k"},"From"), el("b",{}, `${fmt(last.wind_dir,0)}° ${card(last.wind_dir)}`)));
-    wtx.append(el("div",{class:"wl"}, el("span",{class:"k"},"Speed"), el("b",{}, `${fmt(U.windMs(last.wind_ms),0)} ${U.wUnit()}`), el("i",{class:"chip "+windCls(last.wind_ms)})));
-    wtx.append(el("div",{class:"wl"}, el("span",{class:"k"},"Gust"), el("b",{}, `${fmt(U.windMs(last.gust_ms),0)} ${U.wUnit()}`), el("i",{class:"chip "+windCls(last.gust_ms)})));
-    const fW=Fnow.WS?U.windKmh(Fnow.WS.v):null, fG=Fnow.WG?U.windKmh(Fnow.WG.v):null;
-    wtx.append(el("div",{class:"wl fcl"}, el("span",{class:"k"},"NWS"),
-      el("span",{}, Fnow.WD||Fnow.WS ? `${fmt(Fnow.WD?.v,0)}° ${card(Fnow.WD?.v)} @ ${fmt(fW,0)}${fG!=null?" G "+fmt(fG,0):""} ${U.wUnit()}` : "—")));
-    wtx.append(el("div",{class:"wkey"}, "Arrow on the ring = where the wind is coming from. Dots = last 6 h of direction. Hollow marker = NWS forecast direction."));
-    wrow.append(wtx); tW.append(wrow);
-    cc.append(tW);
-
-    // precipitation
-    const pre=buildPrecipFor(last);
-    const tP=el("div",{class:"tile small",id:"cc-precip"});
-    tP.append(el("div",{class:"lbl"},el("span",{},"Precipitation"), last.icon?el("span",{class:"icon"},last.icon.replace(/_/g," ")):null));
-    tP.append(el("div",{class:"val"}, fmt(U.pr(last.precip_rate_mmh),U.pDec()), el("span",{class:"u"},U.pUnit()+"/h")));
-    tP.append(el("div",{class:"fc"}, `Last 24 h ${fmt(U.pr(pre.obs24),U.pDec())} ${U.pUnit()} observed · ${fmt(U.pr(pre.fc24),U.pDec())} forecast`));
-    tP.append(el("div",{class:"fc"}, "NWS chance this hour ", el("b",{}, Fnow.PoP?fmt(Fnow.PoP.v,0)+"%":"—")));
-    cc.append(tP);
-
-    // pressure
-    const tR=el("div",{class:"tile small",id:"cc-pressure"});
-    tR.append(el("div",{class:"lbl"},"Pressure (station)"));
-    tR.append(el("div",{class:"val"}, fmt(last.pressure_hpa,1), el("span",{class:"u"},"hPa")));
-    const p3=OBS.filter(o=>o.pressure_hpa!=null && o.t<=last.t-2.5*HOUR && o.t>=last.t-3.5*HOUR).pop();
-    const dp = p3&&last.pressure_hpa!=null ? last.pressure_hpa-p3.pressure_hpa : null;
-    tR.append(el("div",{class:"fc"}, `${fmt(last.pressure_hpa!=null?last.pressure_hpa*0.0295300:null,2)} inHg`,
-      dp!=null ? `  ·  ${dp>0.3?"Rising":dp<-0.3?"Falling":"Steady"} ${sgn(dp,1)} hPa / 3 h` : ""));
-    cc.append(tR);
-    main.append(cc);
-  }
-
-  /* ===== observed vs forecast ===== */
   const leadLbl = state.lead? `${state.lead} h lead`:"latest forecast";
-  main.append(el("h2",{},"Observed vs forecast",el("small",{},`dashed = NWS (${leadLbl}); faint = newest forecast ahead`)));
-  const grid=el("div",{class:"charts"}); main.append(grid);
-  const byId=Object.fromEntries(V.map(v=>[v.id,v]));
-  const legendObsFc=()=>el("div",{class:"legend"},
-    el("span",{},el("i",{class:"sw",style:"border-color:var(--obs)"}),"Observed (station)"),
-    el("span",{},el("i",{class:"sw",style:"border-color:var(--fc);border-top-style:dashed"}),"NWS forecast"));
-  const card_=(id,title,wide,notes,legend)=>{
-    const c=el("div",{class:"card"+(wide?" wide":""),id:"chart-"+id});
-    c.append(el("h3",{},title)); if(notes) c.append(el("div",{class:"note"},notes)); c.append(legend);
-    const ch=el("div",{class:"chart"}); c.append(ch); grid.append(c); return ch;
-  };
-  const chT=card_("temp",`Temperature (${U.tUnit()})`,false,null,legendObsFc());
-  const chH=card_("rh","Relative humidity (%)",false,null,legendObsFc());
-  const kt=x=>state.wu==="kt"?`${x} kt`:`${x} kt (${fmt(U.windMs(x/1.943844),1)} ${U.wUnit()})`;
-  const wl=el("div",{class:"legend"},
-    el("span",{},windGlyph("var(--text2)",false),"Observed wind — arrow points downwind"),
-    el("span",{},windGlyph("var(--text2)",true),"NWS forecast wind"),
-    el("span",{},el("i",{class:"dia"}),"Gust"),
-    el("span",{},el("i",{class:"sw",style:"border-color:var(--fc);border-top-style:dashed"}),"NWS speed"),
-    el("span",{},el("i",{class:"sw",style:"border-color:var(--fc);border-top-style:dotted"}),"NWS gust"),
-    el("span",{class:"bands"}, el("i",{class:"chip wc-lo"}),`< ${kt(WIND_BANDS_KT[0])}`, el("i",{class:"chip wc-mid"}),`${WIND_BANDS_KT[0]}–${WIND_BANDS_KT[1]} kt`, el("i",{class:"chip wc-hi"}),`> ${kt(WIND_BANDS_KT[1])}`));
-  const chW=card_("wind",`Wind speed, direction & gust (${U.wUnit()})`,true,null,wl);
-  const chP=card_("precip",`Precipitation (hourly, ${U.pUnit()})`,true,"Bars = observed per sample interval · line = NWS QPF per hour",legendObsFc());
-  after.push(()=>{ drawChart(chT,byId.temp,rows,lr); drawChart(chH,byId.rh,rows,lr); drawWindChart(chW,rows,lr); drawChart(chP,byId.precip,rows,lr); });
 
-  /* ===== data table ===== */
-  const det=el("details",{id:"datatable"}); if(wasOpen) det.open=true;
-  det.addEventListener("toggle",()=>{ state.tableOpen=det.open; });
-  det.append(el("summary",{},`Data table (${rows.length} observations in range)`));
+  main.append(el("div",{class:"boardhead"},
+    el("span",{}, el("b",{},"Current conditions"), last?"as of "+fmtT(new Date(last.t)):""),
+    el("span",{}, el("b",{},"Observed vs forecast"), `dashed = NWS (${leadLbl}) · faint dashed = newest NWS forecast ahead · scroll sideways for more`)));
+  const board=el("div",{class:"board"}); main.append(board);
+  const T = last ? tiles(last) : {};
+  const obsLeg=()=>el("div",{class:"legend"}, el("span",{},swatch("var(--obs)"),"Observed"), el("span",{},swatch("var(--fc)","dashed"),"NWS"));
+  const kt=k=>state.wu==="kt"?`${k} kt`:`${k} kt (${fmt(U.windMs(k/1.943844),1)} ${U.wUnit()})`;
+  const cells={
+    temp:  cellShell("temp","row-temp",`Temperature (${U.tUnit()})`, obsLeg()),
+    wind:  cellShell("wind","row-wind",`Wind (${U.wUnit()})`, el("div",{class:"legend"},
+              el("span",{},windGlyph("var(--text2)",false),"Observed, points downwind"), el("span",{},windGlyph("var(--text2)",true),"NWS"),
+              el("span",{},swatch("var(--obs)"),"Gust"), el("span",{},swatch("var(--fc)","dashed"),"NWS speed"), el("span",{},swatch("var(--fc)","dotted"),"NWS gust"),
+              el("span",{},el("i",{class:"chip wc-lo"}),`< ${kt(WIND_BANDS_KT[0])}`), el("span",{},el("i",{class:"chip wc-mid"}),`${WIND_BANDS_KT[0]}–${WIND_BANDS_KT[1]} kt`), el("span",{},el("i",{class:"chip wc-hi"}),`> ${kt(WIND_BANDS_KT[1])}`))),
+    precip:cellShell("precip","row-precip",`Precipitation (${U.pUnit()} per hour)`, el("div",{class:"legend"}, el("span",{},el("i",{class:"chip",style:"background:var(--obs)"}),"Observed"), el("span",{},swatch("var(--fc)","dashed"),"NWS QPF"))),
+    rh:    cellShell("rh","row-rh","Relative humidity (%)", obsLeg()),
+    pres:  cellShell("pres","row-pres","Station pressure (hPa)", el("div",{class:"legend"}, el("span",{},swatch("var(--obs)"),"Observed (no NWS forecast)"))),
+  };
+  for(const k of ["temp","wind","precip","rh","pres"]){ board.append(T[k]||el("div",{class:"tile row-"+k})); board.append(cells[k].cell); }
+
+  /* data table */
+  const det=el("details",{id:"datatable"}); if(tableOpen) det.open=true;
+  det.addEventListener("toggle",()=>{ tableOpen=det.open; });
+  det.append(el("summary",{},`Data table (${ROWS.length} observations, newest first)`));
   const copy=el("button",{class:"btn",type:"button",style:"margin:0 0 8px"},"Copy as CSV");
-  const hdr=["time_local",`temp_obs_${U.tUnit()}`,`temp_fc_${U.tUnit()}`,"rh_obs_%","rh_fc_%",`wind_obs_${U.wUnit()}`,`wind_fc_${U.wUnit()}`,`gust_obs_${U.wUnit()}`,`gust_fc_${U.wUnit()}`,"dir_obs_deg","dir_fc_deg",`precip_obs_${U.pUnit()}`,`qpf_fc_${U.pUnit()}`,"pop_%","pressure_hpa"];
-  const data=rows.slice().reverse().map(r=>[fmtT(new Date(r.o.t)),
-    fmt(byId.temp.obs(r.o),1),fmt(byId.temp.fc(r.F),1),fmt(r.o.rh,0),fmt(r.F.RH?.v,0),fmt(byId.wind.obs(r.o),1),fmt(byId.wind.fc(r.F),1),fmt(byId.gust.obs(r.o),1),fmt(byId.gust.fc(r.F),1),
-    fmt(r.o.wind_dir,0),fmt(r.F.WD?.v,0),fmt(byId.precip.obs(r.o),U.pDec()+1),fmt(byId.precip.fc(r.F),U.pDec()+1),fmt(r.F.PoP?.v,0),fmt(r.o.pressure_hpa,1)]);
+  const hdr=["time_local",`temp_obs_${U.tUnit()}`,`temp_fc_${U.tUnit()}`,`wind_obs_${U.wUnit()}`,`wind_fc_${U.wUnit()}`,`gust_obs_${U.wUnit()}`,`gust_fc_${U.wUnit()}`,"dir_obs_deg","dir_fc_deg",`precip_obs_${U.pUnit()}`,`qpf_fc_${U.pUnit()}`,"pop_%","rh_obs_%","rh_fc_%","pressure_hpa"];
+  const data=ROWS.slice().reverse().map(r=>[fmtT(new Date(r.o.t)),
+    fmt(U.temp(r.o.temp_c),1),fmt(U.temp(r.F.T?.v),1),fmt(U.windMs(r.o.wind_ms),1),fmt(U.windKmh(r.F.WS?.v),1),fmt(U.windMs(r.o.gust_ms),1),fmt(U.windKmh(r.F.WG?.v),1),
+    fmt(r.o.wind_dir,0),fmt(r.F.WD?.v,0),fmt(U.pr(r.o.p_obs),U.pDec()+1),fmt(U.pr(r.F.QPF?.v),U.pDec()+1),fmt(r.F.PoP?.v,0),fmt(r.o.rh,0),fmt(r.F.RH?.v,0),fmt(r.o.pressure_hpa,1)]);
   copy.addEventListener("click", async ()=>{
     const csv=[hdr,...data].map(r=>r.map(x=>/[",]/.test(x)?`"${x.replace(/"/g,'""')}"`:x).join(",")).join("\n");
     try{ await navigator.clipboard.writeText(csv); copy.textContent="Copied"; }catch(e){ copy.textContent="Copy blocked by browser"; }
@@ -465,197 +570,36 @@ function render(){
   det.append(el("div",{class:"tbl"},t2));
   main.append(det);
 
-  /* ===== forecast accuracy (bottom) — same order as current conditions ===== */
-  main.append(el("h2",{id:"accuracy"},"Forecast accuracy",el("small",{},`last ${state.range} h · ${leadLbl} · error = forecast − observed`)));
-  const tb=el("table"), hr=el("tr");
-  ["Variable","Samples","Bias","Mean abs error","RMS error"].forEach(h=>hr.append(el("th",{},h)));
-  tb.append(el("thead",{},hr));
-  const tbody=el("tbody");
-  ["temp","rh","wind","gust","dir","precip"].map(id=>byId[id]).forEach(v=>{
-    const s=stats(rows,v), tr=el("tr");
-    const u=v.unit==="%"?" pts":(v.unit==="°"?"°":" "+v.unit);
-    tr.append(el("td",{},v.name), el("td",{},s.n||0),
-      el("td",{},s.n?sgn(s.bias,v.sdec)+u:"—"), el("td",{},s.n?fmt(s.mae,v.sdec)+u:"—"), el("td",{},s.n?fmt(s.rmse,v.sdec)+u:"—"));
-    tbody.append(tr);
-  });
-  tb.append(tbody);
-  main.append(el("div",{class:"tbl"},tb));
+  /* accuracy (bottom) */
+  main.append(el("h2",{id:"accuracy"},"Forecast accuracy",el("small",{id:"acc-sub"})));
+  main.append(el("div",{class:"tbl",id:"acc"}));
 
-  after.forEach(f=>f());
+  /* plots need the layout in place to size themselves */
+  const visW = Math.max(200, cells.temp.plot.clientWidth - 44);
+  TIME = timeFrame(visW);
+  lineChart(cells.temp.plot, ROWS, {obs:o=>U.temp(o.temp_c), fc:F=>U.temp(F.T?.v), fk:"T", fconv:v=>U.temp(v), unit:U.tUnit(), dec:1, minSpan:state.tu==="F"?8:4});
+  windChart(cells.wind.plot, ROWS);
+  precipChart(cells.precip.plot, ROWS);
+  lineChart(cells.rh.plot, ROWS, {obs:o=>o.rh, fc:F=>F.RH?.v, fk:"RH", fconv:v=>v, unit:"%", dec:0, domain:[0,100]});
+  lineChart(cells.pres.plot, ROWS, {obs:o=>o.pressure_hpa, unit:" hPa", dec:1, minSpan:4, yfmt:d3.format("d")});
+  scrollTo(viewStart);
+  SCROLLERS.forEach(sc=>sc.addEventListener("scroll",()=>onScroll(sc),{passive:true}));
+  renderAccuracy();
 }
 
-/* legend glyph: small arrow, filled (observed) or outlined (forecast) */
-function windGlyph(color, hollow){
-  const s=sv("svg",{viewBox:"-9 -9 18 18",width:16,height:16,"aria-hidden":"true"});
-  s.append(sv("path",{d:ARROW_D,transform:"rotate(45)",fill:hollow?"none":color,stroke:color,"stroke-width":hollow?1.4:0,"stroke-linejoin":"round"}));
-  return s;
+/* ---------- synchronised horizontal scrolling ---------- */
+let accTimer=null;
+function scrollTo(t){
+  if(!TIME) return;
+  const left=Math.max(0,(t-TIME.t0)/HOUR*TIME.pph);
+  syncing=true; SCROLLERS.forEach(sc=>{ sc.scrollLeft=left; }); syncing=false;
+  viewStart = TIME.t0 + (SCROLLERS[0]?SCROLLERS[0].scrollLeft:left)/TIME.pph*HOUR;
 }
-
-/* ---------- combined wind chart: arrows at (time, speed), gust diamonds above ---------- */
-function drawWindChart(container, rows, lr){
-  const W=Math.max(280, container.clientWidth||520), H=240, m={t:14,r:14,b:24,l:40};
-  const now=Date.now(), since=now-state.range*HOUR;
-  const ahead = Math.min(24, Math.max(6, state.range/6))*HOUR;
-  const obs=rows.map(r=>({t:r.o.t, s:U.windMs(r.o.wind_ms), g:U.windMs(r.o.gust_ms), d:r.o.wind_dir, sms:r.o.wind_ms, gms:r.o.gust_ms,
-    fs:r.F.WS?U.windKmh(r.F.WS.v):null, fg:r.F.WG?U.windKmh(r.F.WG.v):null, fd:r.F.WD?.v, r}));
-  const fut=[];
-  if(lr) lr.fcst.t.forEach((s,i)=>{ const t=Date.parse(s); if(t>=floorHour(now) && t<=now+ahead){
-    const ws=lr.fcst.WS?.[i], wg=lr.fcst.WG?.[i];
-    fut.push({t:t+HOUR/2, s:U.windKmh(ws), g:U.windKmh(wg), d:lr.fcst.WD?.[i], sms:ws==null?null:ws/3.6, gms:wg==null?null:wg/3.6}); }});
-  const x=d3.scaleTime().domain([since, now+ahead]).range([m.l, W-m.r]);
-  const ys=[...obs.flatMap(p=>[p.s,p.g,p.fs,p.fg]), ...fut.flatMap(p=>[p.s,p.g])].filter(v=>v!=null&&isFinite(v));
-  const y=d3.scaleLinear().domain([0, Math.max(ys.length?d3.max(ys)*1.12:1, U.windMs(5.2))]).nice().range([H-m.b, m.t]);
-  const svg=d3.select(container).append("svg").attr("width",W).attr("height",H).attr("role","img").attr("aria-label","Wind speed, direction and gust: observed vs forecast");
-  svg.append("g").attr("class","gridl").attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W-m.l-m.r)).tickFormat(""));
-  // threshold guides at 5 and 10 kt
-  WIND_BANDS_KT.forEach((k,i)=>{ const yy=y(U.windMs(k/1.943844)); if(yy<m.t||yy>H-m.b) return;
-    svg.append("line").attr("x1",m.l).attr("x2",W-m.r).attr("y1",yy).attr("y2",yy).attr("stroke",i?"var(--wc-hi)":"var(--wc-mid)").attr("stroke-opacity",.45).attr("stroke-dasharray","1 3");
-    svg.append("text").attr("x",W-m.r-2).attr("y",yy-3).attr("text-anchor","end").attr("fill","var(--muted)").attr("font-size",10).text(`${k} kt`); });
-  const hp=new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",hourCycle:"h23"}), dp=new Intl.DateTimeFormat("en-US",{timeZone:TZ,month:"short",day:"numeric"}), hl=new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric"});
-  svg.append("g").attr("class","axis").attr("transform",`translate(0,${H-m.b})`).call(d3.axisBottom(x).ticks(Math.max(3,Math.floor(W/110))).tickFormat(d=>Number(hp.format(d))%24===0?dp.format(d):hl.format(d)).tickSizeOuter(0));
-  svg.append("g").attr("class","axis").attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSizeOuter(0));
-  svg.append("line").attr("x1",x(now)).attr("x2",x(now)).attr("y1",m.t).attr("y2",H-m.b).attr("stroke","var(--border)").attr("stroke-dasharray","2 3");
-  svg.append("text").attr("x",x(now)+4).attr("y",m.t+10).attr("fill","var(--muted)").attr("font-size",10.5).text("now");
-
-  const def=k=>d=>d[k]!=null&&isFinite(d[k]);
-  // forecast (selected lead) as dashed speed line + dotted gust line
-  const lf=k=>d3.line().defined(def(k)).x(d=>x(d.t)).y(d=>y(d[k])).curve(d3.curveMonotoneX);
-  svg.append("path").datum(obs).attr("d",lf("fs")).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",1.6).attr("stroke-dasharray","5 3");
-  svg.append("path").datum(obs).attr("d",lf("fg")).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",1.4).attr("stroke-dasharray","1.5 3").attr("stroke-linecap","round");
-  svg.append("path").datum(fut).attr("d",lf("s")).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",1.6).attr("stroke-dasharray","5 3");
-  svg.append("path").datum(fut).attr("d",lf("g")).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",1.4).attr("stroke-dasharray","1.5 3").attr("stroke-linecap","round");
-  // thin trace through observed speeds so short-term changes read between arrows
-  svg.append("path").datum(obs).attr("d",lf("s")).attr("fill","none").attr("stroke","var(--muted)").attr("stroke-width",1).attr("stroke-opacity",.6);
-
-  // thin out glyphs so they never overlap (keep every k-th point)
-  const thin=(pts)=>{ if(pts.length<2) return pts; const px=(x(pts[pts.length-1].t)-x(pts[0].t))/(pts.length-1)||99; const k=Math.max(1,Math.ceil(15/px)); return pts.filter((_,i)=>(pts.length-1-i)%k===0); };
-  const g=svg.append("g");
-  const glyph=(p,hollow)=>{
-    if(p.g!=null && p.s!=null && p.g>p.s) g.append("line").attr("x1",x(p.t)).attr("x2",x(p.t)).attr("y1",y(p.s)).attr("y2",y(p.g)).attr("stroke","var(--muted)").attr("stroke-width",1).attr("stroke-opacity",.7);
-    if(p.g!=null) g.append("path").attr("d","M0,-4.5 L4.5,0 L0,4.5 L-4.5,0 Z").attr("transform",`translate(${x(p.t)},${y(p.g)})`)
-      .attr("fill",hollow?"var(--surface)":windColor(p.gms)).attr("stroke",hollow?windColor(p.gms):"var(--surface)").attr("stroke-width",hollow?1.4:1);
-    if(p.s!=null){
-      const rot = p.d!=null ? (p.d+180)%360 : null;
-      if(rot==null) g.append("circle").attr("cx",x(p.t)).attr("cy",y(p.s)).attr("r",3.5).attr("fill",windColor(p.sms));
-      else g.append("path").attr("d",ARROW_D).attr("transform",`translate(${x(p.t)},${y(p.s)}) rotate(${rot})`)
-        .attr("fill",hollow?"var(--surface)":windColor(p.sms)).attr("stroke",hollow?windColor(p.sms):"var(--surface)").attr("stroke-width",hollow?1.5:1).attr("stroke-linejoin","round");
-    }
-  };
-  thin(fut).forEach(p=>glyph(p,true));
-  thin(obs).forEach(p=>glyph(p,false));
-
-  /* hover */
-  const tip=document.createElement("div"); tip.className="tip"; container.append(tip);
-  const cross=svg.append("line").attr("y1",m.t).attr("y2",H-m.b).attr("stroke","var(--muted)").style("display","none");
-  const all=[...obs.map(p=>({...p,kind:"o"})), ...fut.map(p=>({...p,kind:"u"}))].sort((a,b)=>a.t-b.t);
-  const bis=d3.bisector(d=>d.t).center, u=" "+U.wUnit();
-  const wtxt=(d,s,g)=> `${d!=null?fmt(d,0)+"° "+card(d):"—"} @ ${fmt(s,0)}${g!=null?" G "+fmt(g,0):""}${u}`;
-  svg.append("rect").attr("x",m.l).attr("y",m.t).attr("width",W-m.l-m.r).attr("height",H-m.t-m.b).attr("fill","transparent")
-    .on("pointermove",ev=>{
-      if(!all.length) return;
-      const [px]=d3.pointer(ev); const d=all[bis(all,x.invert(px))]; if(!d) return;
-      cross.style("display",null).attr("x1",x(d.t)).attr("x2",x(d.t));
-      tip.textContent="";
-      tip.append(el("div",{class:"t"}, d.kind==="u"? fmtT(new Date(d.t-HOUR/2))+" (forecast)" : fmtT(new Date(d.t))));
-      if(d.kind==="o"){
-        tip.append(el("div",{class:"r"}, el("i",{class:"chip "+windCls(d.sms)}), "Observed "+wtxt(d.d,d.s,d.g)));
-        tip.append(el("div",{class:"r"}, el("i",{class:"sw",style:"border-color:var(--fc);border-top-style:dashed"}), "NWS "+wtxt(d.fd,d.fs,d.fg)));
-        const run=d.r.F.WS?.run; if(run) tip.append(el("div",{class:"r",style:"color:var(--muted)"},`Fcst fetched ${fmtT(new Date(run.t))}`));
-      } else tip.append(el("div",{class:"r"}, el("i",{class:"chip "+windCls(d.sms)}), "NWS "+wtxt(d.d,d.s,d.g)));
-      tip.style.display="block";
-      const tw=tip.offsetWidth; let left=x(d.t)+12; if(left+tw>W) left=x(d.t)-tw-12; tip.style.left=Math.max(0,left)+"px"; tip.style.top="8px";
-    })
-    .on("pointerleave",()=>{ tip.style.display="none"; cross.style("display","none"); });
-}
-
-function buildPrecipFor(last){
-  const since=last.t-24*HOUR; let obs=0, fc=0, prev=null, any=false;
-  for(const o of OBS){
-    if(o.precip_accum_mm!=null && prev!=null && o.t>since){ const d=o.precip_accum_mm-prev; obs+= d<0?o.precip_accum_mm:d; any=true; }
-    if(o.precip_accum_mm!=null) prev=o.precip_accum_mm;
-  }
-  for(let h=floorHour(since)+HOUR; h<=floorHour(last.t); h+=HOUR){ const f=fcAt(h,h,0,"QPF"); if(f) fc+=f.v; }
-  return {obs24:any?obs:null, fc24:fc};
-}
-
-function drawChart(container, v, rows, lr){
-  const W=Math.max(280, container.clientWidth||520), H=190, m={t:8,r:12,b:24,l:40};
-  const now=Date.now(), since=now-state.range*HOUR;
-  const ahead = Math.min(24, Math.max(6, state.range/6))*HOUR;
-  const obsPts=rows.map(r=>({t:r.o.t, y:v.obs(r.o), f:v.fc(r.F), r}));
-  const futPts=[];
-  if(lr && lr.fcst?.t){
-    lr.fcst.t.forEach((s,i)=>{ const t=Date.parse(s); if(t>=floorHour(now) && t<=now+ahead) futPts.push({t:t+HOUR/2, y:v.fconv(lr.fcst[v.fk]?.[i])}); });
-  }
-  const x=d3.scaleTime().domain([since, now+ahead]).range([m.l, W-m.r]);
-  const ys=[...obsPts.map(p=>p.y), ...obsPts.map(p=>p.f), ...futPts.map(p=>p.y)].filter(y=>y!=null&&isFinite(y));
-  let lo = v.yMin!=null? v.yMin : (ys.length? d3.min(ys):0), hi = v.yMax!=null? v.yMax : (ys.length? d3.max(ys):1);
-  if(v.yMin==null){ const pad=(hi-lo)*0.12||1; lo-=pad; }
-  if(v.yMax==null){ const pad=(hi-lo)*0.12||1; hi+=pad; }
-  if(v.bars && hi<=0) hi = v.unit==="in"?0.05:1;
-  const y=d3.scaleLinear().domain([lo,hi]).nice().range([H-m.b, m.t]);
-  const svg=d3.select(container).append("svg").attr("width",W).attr("height",H).attr("role","img").attr("aria-label",`${v.name}: observed vs forecast`);
-  svg.append("g").attr("class","gridl").attr("transform",`translate(${m.l},0)`)
-    .call(d3.axisLeft(y).ticks(v.circ?4:5).tickSize(-(W-m.l-m.r)).tickFormat(""));
-  const hp=new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",hourCycle:"h23"});
-  const dp=new Intl.DateTimeFormat("en-US",{timeZone:TZ,month:"short",day:"numeric"});
-  const hl=new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric"});
-  const tz = d => Number(hp.format(d))%24===0 ? dp.format(d) : hl.format(d);
-  svg.append("g").attr("class","axis").attr("transform",`translate(0,${H-m.b})`).call(d3.axisBottom(x).ticks(Math.max(3,Math.floor(W/110))).tickFormat(tz).tickSizeOuter(0));
-  svg.append("g").attr("class","axis").attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(v.circ?4:5).tickValues(v.circ?[0,90,180,270,360]:null).tickSizeOuter(0));
-  // now marker
-  svg.append("line").attr("x1",x(now)).attr("x2",x(now)).attr("y1",m.t).attr("y2",H-m.b).attr("stroke","var(--border)").attr("stroke-dasharray","2 3");
-  svg.append("text").attr("x",x(now)+4).attr("y",m.t+10).attr("fill","var(--muted)").attr("font-size",10.5).text("now");
-
-  const def=k=>d=>d[k]!=null&&isFinite(d[k]);
-  if(v.circ){
-    svg.append("g").selectAll("circle.f").data(obsPts.filter(def("f"))).join("circle").attr("cx",d=>x(d.t)).attr("cy",d=>y(d.f)).attr("r",3.5).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",1.5);
-    svg.append("g").selectAll("circle.fu").data(futPts.filter(def("y"))).join("circle").attr("cx",d=>x(d.t)).attr("cy",d=>y(d.y)).attr("r",3).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",1.5);
-    svg.append("g").selectAll("circle.o").data(obsPts.filter(def("y"))).join("circle").attr("cx",d=>x(d.t)).attr("cy",d=>y(d.y)).attr("r",4).attr("fill","var(--obs)").attr("stroke","var(--surface)").attr("stroke-width",2);
-  } else if(v.bars){
-    const bw=Math.max(2, Math.min(14, (x(since+HOUR)-x(since))*0.7));
-    svg.append("g").selectAll("rect").data(obsPts.filter(d=>d.y!=null&&d.y>0)).join("rect")
-      .attr("x",d=>x(d.t)-bw/2).attr("width",bw).attr("y",d=>y(d.y)).attr("height",d=>Math.max(0,y(lo)-y(d.y))).attr("rx",Math.min(4,bw/2)).attr("fill","var(--obs)");
-    const line=d3.line().defined(def("f")).x(d=>x(d.t)).y(d=>y(d.f)).curve(d3.curveStepAfter);
-    svg.append("path").datum(obsPts).attr("d",line).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
-    const l2=d3.line().defined(def("y")).x(d=>x(d.t)).y(d=>y(d.y)).curve(d3.curveStepAfter);
-    svg.append("path").datum(futPts).attr("d",l2).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
-  } else {
-    const lf=d3.line().defined(def("f")).x(d=>x(d.t)).y(d=>y(d.f)).curve(d3.curveMonotoneX);
-    svg.append("path").datum(obsPts).attr("d",lf).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
-    const lu=d3.line().defined(def("y")).x(d=>x(d.t)).y(d=>y(d.y)).curve(d3.curveMonotoneX);
-    svg.append("path").datum(futPts).attr("d",lu).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
-    const lo2=d3.line().defined(def("y")).x(d=>x(d.t)).y(d=>y(d.y)).curve(d3.curveMonotoneX);
-    svg.append("path").datum(obsPts).attr("d",lo2).attr("fill","none").attr("stroke","var(--obs)").attr("stroke-width",2);
-    if(obsPts.filter(def("y")).length<3) svg.append("g").selectAll("circle").data(obsPts.filter(def("y"))).join("circle").attr("cx",d=>x(d.t)).attr("cy",d=>y(d.y)).attr("r",4).attr("fill","var(--obs)");
-  }
-
-  /* hover */
-  const tip=document.createElement("div"); tip.className="tip"; container.append(tip);
-  const cross=svg.append("line").attr("y1",m.t).attr("y2",H-m.b).attr("stroke","var(--muted)").attr("stroke-width",1).style("display","none");
-  const all=[...obsPts.map(p=>({...p,kind:"o"})), ...futPts.map(p=>({...p,kind:"u"}))].sort((a,b)=>a.t-b.t);
-  const bis=d3.bisector(d=>d.t).center;
-  svg.append("rect").attr("x",m.l).attr("y",m.t).attr("width",W-m.l-m.r).attr("height",H-m.t-m.b).attr("fill","transparent")
-    .on("pointermove",ev=>{
-      if(!all.length) return;
-      const [px]=d3.pointer(ev); const d=all[bis(all, x.invert(px))]; if(!d) return;
-      cross.style("display",null).attr("x1",x(d.t)).attr("x2",x(d.t));
-      const u=v.unit==="°"?"°":v.unit==="%"?"%":" "+v.unit, dd=v.dec+(v.bars?1:0);
-      tip.textContent="";
-      tip.append(el("div",{class:"t"}, d.kind==="u"? fmtT(new Date(d.t-HOUR/2))+" (forecast)" : fmtT(new Date(d.t))));
-      if(d.kind==="o"){
-        tip.append(el("div",{class:"r"},el("i",{class:"sw",style:"border-color:var(--obs)"}),`Observed ${fmt(d.y,dd)}${u}`+(v.circ&&d.y!=null?" "+card(d.y):"")));
-        tip.append(el("div",{class:"r"},el("i",{class:"sw",style:"border-color:var(--fc);border-top-style:dashed"}),`Forecast ${fmt(d.f,dd)}${u}`+(v.circ&&d.f!=null?" "+card(d.f):"")));
-        if(d.y!=null&&d.f!=null){ const e=v.circ?dirDiff(d.f,d.y):d.f-d.y; tip.append(el("div",{class:"r",style:"color:var(--text2)"},`Fcst − obs ${sgn(e,dd)}${u}`)); }
-        const run=d.r.F[v.fk]?.run; if(run) tip.append(el("div",{class:"r",style:"color:var(--muted)"},`Fcst fetched ${fmtT(new Date(run.t))}`));
-        if(v.bars && d.r.F.PoP) tip.append(el("div",{class:"r",style:"color:var(--muted)"},`PoP ${fmt(d.r.F.PoP.v,0)}%`));
-      } else {
-        tip.append(el("div",{class:"r"},el("i",{class:"sw",style:"border-color:var(--fc-soft);border-top-style:dashed"}),`Forecast ${fmt(d.y,dd)}${u}`+(v.circ&&d.y!=null?" "+card(d.y):"")));
-      }
-      tip.style.display="block";
-      const tw=tip.offsetWidth; let left=x(d.t)+12; if(left+tw>W) left=x(d.t)-tw-12; tip.style.left=Math.max(0,left)+"px"; tip.style.top="8px";
-    })
-    .on("pointerleave",()=>{ tip.style.display="none"; cross.style("display","none"); });
+function onScroll(src){
+  if(syncing) return;
+  syncing=true; SCROLLERS.forEach(sc=>{ if(sc!==src) sc.scrollLeft=src.scrollLeft; }); syncing=false;
+  viewStart = TIME.t0 + src.scrollLeft/TIME.pph*HOUR; saveView();
+  clearTimeout(accTimer); accTimer=setTimeout(renderAccuracy,150);
 }
 
 /* ---------- controls ---------- */
@@ -669,13 +613,17 @@ document.querySelectorAll(".seg").forEach(seg=>{
   seg.addEventListener("click",ev=>{
     const b=ev.target.closest("button"); if(!b) return;
     const k=seg.dataset.k, v=b.dataset.v;
-    state[k]= (k==="range"||k==="lead")? Number(v) : v;
-    savePrefs(); syncControls();
-    render();
+    state[k]= (k==="range"||k==="lead")? Number(v) : v;   // a wider window keeps the left edge and extends to the right
+    savePrefs(); syncControls(); render();
   });
 });
+document.getElementById("tonow").addEventListener("click",()=>{
+  viewStart=Date.now()-LEFT_PAD_H*HOUR; saveView();
+  render();
+});
 document.getElementById("refresh").addEventListener("click",()=>location.reload());
-let rz, lastW=0; new ResizeObserver(es=>{ const w=Math.round(es[0].contentRect.width); if(w===lastW) return; lastW=w; clearTimeout(rz); rz=setTimeout(()=>{ if(OBS.length||RUNS.length) render(); },150); }).observe(document.querySelector(".wrap"));
+let rz, lastW=0;
+new ResizeObserver(es=>{ const w=Math.round(es[0].contentRect.width); if(w===lastW) return; lastW=w; clearTimeout(rz); rz=setTimeout(()=>{ if(OBS.length||RUNS.length) render(); },150); }).observe(document.querySelector(".wrap"));
 syncControls();
 
 (function(){
@@ -690,7 +638,7 @@ syncControls();
 })();
 if(DATA&&DATA.built){ const b=document.createElement("div"); b.textContent="Page built "+fmtT(new Date(DATA.built))+" Pacific."; document.querySelector(".foot").append(b); }
 load();
-setInterval(()=>location.reload(), 15*60e3); // the page is rebuilt hourly; pick up new data while open
+setInterval(()=>location.reload(), 15*60e3); // the page is rebuilt hourly; the scroll position is kept across reloads
 })();
 </script>
 </body>

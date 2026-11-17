@@ -20,7 +20,8 @@ WXM_CELL = "8729ac626ffffff"
 WXM_NAME = "High Indigo Air"
 WXM_ID = "a1e49090-ad73-11ef-8b2f-f594437d6709"
 UA = "OdysAviation-FlightTest-WxDashboard/1.0"
-FCST_HOURS = 48
+FCST_HOURS = 48        # kept in the hourly history (enough for 24 h lead comparisons)
+FCST_HOURS_LATEST = 168  # newest forecast only, for the dashboard's look-ahead
 LAYERS = {  # NWS layer -> short key
     "temperature": "T", "dewpoint": "Td", "relativeHumidity": "RH",
     "windSpeed": "WS", "windDirection": "WD", "windGust": "WG",
@@ -87,15 +88,15 @@ def wxm_obs(mock=None):
     return ts, obs
 
 
-def nws_fcst(now, mock_points=None, mock_grid=None):
+def nws_fcst(now, mock_points=None, mock_grid=None, n_hours=FCST_HOURS):
     pts = get(f"https://api.weather.gov/points/{LAT},{LON}", mock_points)["properties"]
     grid = get(pts["forecastGridData"], mock_grid)["properties"]
     start = now.replace(minute=0, second=0, microsecond=0)
-    hours = [start + timedelta(hours=i) for i in range(FCST_HOURS)]
+    hours = [start + timedelta(hours=i) for i in range(n_hours)]
     idx = {h: i for i, h in enumerate(hours)}
     out = {"t": [iso_z(h) for h in hours]}
     for layer, key in LAYERS.items():
-        col = [None] * FCST_HOURS
+        col = [None] * n_hours
         for v in (grid.get(layer) or {}).get("values", []):
             t0s, dur = v["validTime"].split("/")
             t0 = datetime.fromisoformat(t0s.replace("Z", "+00:00"))
@@ -163,11 +164,19 @@ def main():
         errors.append(f"WeatherXM: {e}"[:300])
 
     try:
-        fc = nws_fcst(now, mock and f"{mock}/points.json", mock and f"{mock}/grid.json")
-        fc = {"at": iso_z(now), **fc}
-        run["nws_ok"], run["fcst_issued"] = True, fc.get("issued")
+        full = nws_fcst(now, mock and f"{mock}/points.json", mock and f"{mock}/grid.json", FCST_HOURS_LATEST)
+        full = {"at": iso_z(now), **full}
+        # trim trailing hours NWS hasn't forecast yet
+        n = len(full["t"])
+        while n and all((full.get(k) or [None])[n - 1] is None for k in LAYERS.values()):
+            n -= 1
+        full.update({k: full[k][:n] for k in ["t", *LAYERS.values()]})
+        with open(os.path.join(DATA, "forecast_latest.json"), "w") as f:
+            json.dump(full, f, separators=(",", ":"))
+        hist = dict(full, **{k: full[k][:FCST_HOURS] for k in ["t", *LAYERS.values()]})
+        run["nws_ok"], run["fcst_issued"] = True, full.get("issued")
         with open(os.path.join(DATA, "forecasts", f"{now:%Y-%m}.jsonl"), "a") as f:
-            f.write(json.dumps(fc, separators=(",", ":")) + "\n")
+            f.write(json.dumps(hist, separators=(",", ":")) + "\n")
     except Exception as e:
         errors.append(f"NWS: {e}"[:300])
 

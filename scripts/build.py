@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds the dashboard and the analysis table from the files collect.py keeps.
 
-  docs/index.html      the dashboard (GitHub Pages serves it); last 7 days of data embedded in the page
+  docs/index.html      the dashboard (GitHub Pages serves it); last 8 days of data + newest 7-day forecast embedded
   data/matched.csv     every observation with the NWS forecast for that hour at 0/3/6/12/24 h lead
 
 Standard library only.  Usage: python scripts/build.py   (WX_NOW=ISO time overrides the clock, for testing)
@@ -153,7 +153,16 @@ def page_data(obs, runs, now):
             col = r.get(v) or []
             fc[v] = [col[i] if i < len(col) else None for i in keep]
         p_runs.append({"at": r["at"], "fcst": fc})
-    return {"built": iso_z(now), "status": last_status(), "obs": p_obs, "runs": p_runs}
+    latest = None
+    lp = os.path.join(DATA, "forecast_latest.json")
+    if os.path.exists(lp):
+        try:
+            with open(lp) as f:
+                lf = json.load(f)
+            latest = {"at": lf["at"], "fcst": {k: lf.get(k) for k in ["issued", "grid", "t", *VARS]}}
+        except (OSError, ValueError, KeyError):
+            latest = None
+    return {"built": iso_z(now), "status": last_status(), "obs": p_obs, "runs": p_runs, "latest": latest}
 
 
 def main():
