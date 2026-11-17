@@ -160,7 +160,7 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
 <div id="main"><div class="empty">Loading data…</div></div>
 
 <div class="foot">
-  Observed: <a href="https://explorer.weatherxm.com/stations/high-indigo-air">WeatherXM station at L62</a> (public cell endpoint), sampled hourly by a GitHub Actions workflow.
+  Observed: <a href="https://explorer.weatherxm.com/stations/high-indigo-air">WeatherXM station at L62</a> (public cell endpoint), sampled every 15 minutes by a GitHub Actions workflow.
   Forecast: <a href="https://forecast.weather.gov/MapClick.php?FcstType=graphical&textField1=35.355&textField2=-119.481">NWS hourly forecast graph</a> (same NDFD grid, via api.weather.gov gridpoint data), snapshotted every hour.
   “Forecast lead” picks, for each observation, the newest forecast issued at least that many hours earlier, so you can see how accuracy changes with lead time. “Latest” uses the newest forecast fetched before the observation.
   <span id="datalinks"></span>
@@ -252,7 +252,7 @@ function futureSeries(){
   const f=LATEST.fcst, now=Date.now(), lastO=OBS.length?OBS[OBS.length-1].t:null;
   // start at the hour of the newest observation so the look-ahead joins the observed/forecast lines
   const start = lastO!=null && now-lastO < 6*HOUR ? floorHour(Math.min(lastO,now)) : floorHour(now);
-  f.t.forEach((s,i)=>{ const t=Date.parse(s); if(t>=start) out.push({t:t+HOUR/2, i, f}); });
+  f.t.forEach((s,i)=>{ const t=Date.parse(s); if(t>=start) out.push({t, i, f}); });
   return out;
 }
 
@@ -398,7 +398,7 @@ function timeFrame(visW){
   const now=Date.now(), pph=visW/state.range;                       // pixels per hour
   const fut=futureSeries();
   let t0=Math.min(OBS.length?OBS[0].t:now, viewStart, now-LEFT_PAD_H*HOUR) - HOUR;
-  let t1=Math.max(fut.length?fut[fut.length-1].t+HOUR/2:now, viewStart+state.range*HOUR, now+HOUR);
+  let t1=Math.max(fut.length?fut[fut.length-1].t+HOUR:now, viewStart+state.range*HOUR, now+HOUR);
   t0=floorHour(t0); t1=Math.ceil(t1/HOUR)*HOUR;
   const W=Math.round((t1-t0)/HOUR*pph);
   DAYLIGHT=[]; for(let d=t0-DAY_MS; d<=t1+DAY_MS; d+=DAY_MS){ const s=sunRiseSet(d); if(s) DAYLIGHT.push(s); }
@@ -475,12 +475,12 @@ function lineChart(plot, rows, spec){
     ? [el("div",{class:"t"},fmtT(new Date(p.t))), tRow("Observed","var(--obs)","solid",`${fmt(p.y,d)}${u}`),
        spec.fc?tRow("NWS","var(--fc)","dashed",`${fmt(p.f,d)}${u}`):null,
        spec.fc&&p.y!=null&&p.f!=null?el("div",{class:"r",style:"color:var(--text2)"},`Fcst − obs ${sgn(p.f-p.y,d)}${u}`):null].filter(Boolean)
-    : [el("div",{class:"t"},fmtT(new Date(p.t-HOUR/2))+" (forecast)"), tRow("NWS","var(--fc-soft)","dashed",`${fmt(p.y,d)}${u}`)]);
+    : [el("div",{class:"t"},fmtT(new Date(p.t))+" (forecast)"), tRow("NWS","var(--fc-soft)","dashed",`${fmt(p.y,d)}${u}`)]);
 }
 
 /* precipitation: observed bars + NWS QPF step line */
 function precipChart(plot, rows){
-  const fut=futureSeries().map(p=>({t:p.t-HOUR/2, y:U.pr(p.f.QPF?.[p.i]), pop:p.f.PoP?.[p.i]}));
+  const fut=futureSeries().map(p=>({t:p.t, y:U.pr(p.f.QPF?.[p.i]), pop:p.f.PoP?.[p.i]}));
   const obs=rows.map(r=>({t:r.o.t, y:U.pr(r.o.p_obs), f:U.pr(r.F.QPF?.v), pop:r.F.PoP?.v}));
   const hi=d3.max([...obs.map(p=>p.y),...obs.map(p=>p.f),...fut.map(p=>p.y)].filter(v=>v!=null))||0;
   const ctx=frame(plot,[0, Math.max(hi*1.15, state.pu==="in"?0.04:1)]); const {layer,x,y}=ctx;
@@ -490,9 +490,9 @@ function precipChart(plot, rows){
   layer.append("path").datum(fobs).attr("d",lineGen(x,y,"f",d3.curveStepAfter)).attr("fill","none").attr("stroke","var(--fc)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
   layer.append("path").datum(fut).attr("d",lineGen(x,y,"y",d3.curveStepAfter)).attr("fill","none").attr("stroke","var(--fc-soft)").attr("stroke-width",2).attr("stroke-dasharray","5 3");
   const u=" "+U.pUnit(), d=U.pDec()+1;
-  hover(ctx,[...obs.map(p=>({...p,k:"o"})),...fut.map(p=>({...p,t:p.t+HOUR/2,k:"u"}))], p=> p.k==="o"
+  hover(ctx,[...obs.map(p=>({...p,k:"o"})),...fut.map(p=>({...p,k:"u"}))], p=> p.k==="o"
     ? [el("div",{class:"t"},fmtT(new Date(p.t))), tRow("Observed","var(--obs)","solid",`${fmt(p.y,d)}${u}`), tRow("NWS QPF","var(--fc)","dashed",`${fmt(p.f,d)}${u}/h`), p.pop!=null?el("div",{class:"r",style:"color:var(--muted)"},`Chance ${fmt(p.pop,0)}%`):null].filter(Boolean)
-    : [el("div",{class:"t"},fmtT(new Date(p.t-HOUR/2))+" (forecast)"), tRow("NWS QPF","var(--fc-soft)","dashed",`${fmt(p.y,d)}${u}/h`), p.pop!=null?el("div",{class:"r",style:"color:var(--muted)"},`Chance ${fmt(p.pop,0)}%`):null].filter(Boolean));
+    : [el("div",{class:"t"},fmtT(new Date(p.t))+" (forecast)"), tRow("NWS QPF","var(--fc-soft)","dashed",`${fmt(p.y,d)}${u}/h`), p.pop!=null?el("div",{class:"r",style:"color:var(--muted)"},`Chance ${fmt(p.pop,0)}%`):null].filter(Boolean));
 }
 
 /* wind: arrows at (time, speed) pointing downwind, gust as a line, NWS dashed/dotted */
@@ -519,11 +519,17 @@ function windChart(plot, rows){
     layer.append("path").attr("d",ARROW_D).attr("transform",`translate(${x(p.t)},${y(p.s)}) rotate(${(p.d+180)%360})${hollow?" scale(0.65)":""}`)
       .attr("fill",hollow?"var(--surface)":windColor(p.sms)).attr("stroke",hollow?windColor(p.sms):"var(--surface)").attr("stroke-width",hollow?2:1).attr("stroke-linejoin","round");
   };
-  thin(fut).forEach(p=>arrow(p,true)); thin(obs).forEach(p=>arrow(p,false));
+  // observed arrows: one per clock hour, the reading closest to the top of the hour
+  // (within ±10 min; if the hour has none that close, the closest within ±30 min)
+  const hourly=[]; const byH=new Map();
+  obs.forEach(p=>{ if(p.s==null) return; const H=Math.round(p.t/HOUR)*HOUR, d=Math.abs(p.t-H); if(d>30*60e3) return;
+    const cur=byH.get(H); if(!cur||d<cur.d) byH.set(H,{p,d}); });
+  [...byH.keys()].sort((a,b)=>a-b).forEach(H=>hourly.push(byH.get(H).p));
+  thin(fut).forEach(p=>arrow(p,true)); thin(hourly).forEach(p=>arrow(p,false));
   const u=" "+U.wUnit(), w=(d,s,g)=>`${d!=null?fmt(d,0)+"° "+card(d):"—"} @ ${fmt(s,0)}${g!=null?" G "+fmt(g,0):""}${u}`;
   hover(ctx,[...obs.map(p=>({...p,k:"o"})),...fut.map(p=>({...p,k:"u"}))], p=> p.k==="o"
     ? [el("div",{class:"t"},fmtT(new Date(p.t))), el("div",{class:"r"},el("i",{class:"chip "+windCls(p.sms)}),"Observed "+w(p.d,p.s,p.g)), tRow("NWS","var(--fc)","dashed",w(p.fd,p.fs,p.fg))]
-    : [el("div",{class:"t"},fmtT(new Date(p.t-HOUR/2))+" (forecast)"), el("div",{class:"r"},el("i",{class:"chip "+windCls(p.sms)}),"NWS "+w(p.d,p.s,p.g))]);
+    : [el("div",{class:"t"},fmtT(new Date(p.t))+" (forecast)"), el("div",{class:"r"},el("i",{class:"chip "+windCls(p.sms)}),"NWS "+w(p.d,p.s,p.g))]);
 }
 
 /* ---------- forecast accuracy: all-time history from data/forecast_errors.csv ---------- */
@@ -569,7 +575,7 @@ function renderAccuracy(){
       el("div",{}, el("span",{},"Average"), el("b",{}, `${sgn(avg,v.dec)}${v.unit}`)),
       el("div",{}, el("span",{},"Last 24 h"), el("b",{}, s.n24?`${sgn(a24,v.dec)}${v.unit}`:"—")),
       el("div",{}, el("span",{},"Typical miss"), el("b",{}, `${fmt(v.conv(s.mae),v.dec)}${v.unit}`)),
-      el("div",{class:"sq-n"}, `${s.n} hourly readings`+(v.note?` · ${v.note}`:""))));
+      el("div",{class:"sq-n"}, `${s.n} readings`+(v.note?` · ${v.note}`:""))));
     box.append(sq);
   });
 }
@@ -598,7 +604,7 @@ function render(){
   const cells={
     temp:  cellShell("temp","row-temp",`Temperature (${U.tUnit()})`, obsLeg()),
     wind:  cellShell("wind","row-wind",`Wind (${U.wUnit()})`, el("div",{class:"legend"},
-              el("span",{},windGlyph("var(--text2)",false),"Observed, points downwind"), el("span",{},windGlyph("var(--text2)",true),"NWS"),
+              el("span",{},windGlyph("var(--text2)",false),"Observed (top of each hour), points downwind"), el("span",{},swatch("var(--muted)"),"Observed speed"), el("span",{},windGlyph("var(--text2)",true),"NWS"),
               el("span",{},swatch("var(--obs)"),"Gust"), el("span",{},swatch("var(--fc)","dashed"),"NWS speed"), el("span",{},swatch("var(--fc)","dotted"),"NWS gust"),
               el("span",{},el("i",{class:"chip wc-lo"}),`< ${kt(WIND_BANDS_KT[0])}`), el("span",{},el("i",{class:"chip wc-mid"}),`${WIND_BANDS_KT[0]}–${WIND_BANDS_KT[1]} kt`), el("span",{},el("i",{class:"chip wc-hi"}),`> ${kt(WIND_BANDS_KT[1])}`))),
     precip:cellShell("precip","row-precip",`Precipitation (${U.pUnit()} per hour)`, el("div",{class:"legend"}, el("span",{},el("i",{class:"chip",style:"background:var(--obs)"}),"Observed"), el("span",{},swatch("var(--fc)","dashed"),"NWS QPF"))),

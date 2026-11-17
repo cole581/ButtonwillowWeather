@@ -123,11 +123,20 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 OBS_FIELDS = ["ts", "temp_c", "dew_c", "rh", "wind_ms", "gust_ms", "wind_dir", "precip_rate_mmh",
               "precip_accum_mm", "pressure_hpa", "icon", "active", "fetched"]
-RUN_FIELDS = ["at", "wxm_ok", "nws_ok", "obs_ts", "new_obs", "fcst_issued", "errors"]
+RUN_FIELDS = ["at", "wxm_ok", "nws_ok", "obs_ts", "new_obs", "fcst_issued", "fcst_saved", "errors"]
 
 
 def append_csv(path, fields, row):
     new = not os.path.exists(path)
+    if not new:  # add any new columns to an existing file's header (older rows get blanks)
+        with open(path, newline="") as f:
+            rows = list(csv.DictReader(f))
+            old = rows[0].keys() if rows else None
+        if old is not None and list(old) != fields:
+            with open(path, "w", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+                w.writeheader()
+                w.writerows(rows)
     with open(path, "a", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         if new:
@@ -142,6 +151,21 @@ def last_obs_ts(path):
         return {r["ts"] for r in csv.DictReader(f)}
 
 
+def last_snapshot():
+    """(issued, fetched time) of the newest saved forecast snapshot, or (None, None)."""
+    files = sorted(f for f in os.listdir(os.path.join(DATA, "forecasts")) if f.endswith(".jsonl"))
+    for name in reversed(files):
+        with open(os.path.join(DATA, "forecasts", name), "rb") as f:
+            lines = [l for l in f.read().splitlines() if l.strip()]
+        if lines:
+            try:
+                r = json.loads(lines[-1])
+                return r.get("issued"), datetime.fromisoformat(r["at"].replace("Z", "+00:00"))
+            except (ValueError, KeyError):
+                return None, None
+    return None, None
+
+
 def main():
     mock = None
     if "--mock-dir" in sys.argv:
@@ -149,7 +173,7 @@ def main():
     now = datetime.fromisoformat(os.environ["WX_NOW"].replace("Z", "+00:00")) if os.environ.get("WX_NOW") \
         else datetime.now(timezone.utc)
     os.makedirs(os.path.join(DATA, "forecasts"), exist_ok=True)
-    run = {"at": iso_z(now), "wxm_ok": False, "nws_ok": False, "new_obs": False}
+    run = {"at": iso_z(now), "wxm_ok": False, "nws_ok": False, "new_obs": False, "fcst_saved": False}
     errors = []
 
     try:
@@ -175,8 +199,15 @@ def main():
             json.dump(full, f, separators=(",", ":"))
         hist = dict(full, **{k: full[k][:FCST_HOURS] for k in ["t", *LAYERS.values()]})
         run["nws_ok"], run["fcst_issued"] = True, full.get("issued")
-        with open(os.path.join(DATA, "forecasts", f"{now:%Y-%m}.jsonl"), "a") as f:
-            f.write(json.dumps(hist, separators=(",", ":")) + "\n")
+        # Runs happen every 15 min; keep a history snapshot about hourly: when the last one is
+        # ~an hour old, or sooner (25+ min) if NWS has issued a new forecast since.
+        last_issued, last_at = last_snapshot()
+        age = None if last_at is None else now - last_at
+        if age is None or age >= timedelta(minutes=55) or \
+                (last_issued != full.get("issued") and age >= timedelta(minutes=25)):
+            with open(os.path.join(DATA, "forecasts", f"{now:%Y-%m}.jsonl"), "a") as f:
+                f.write(json.dumps(hist, separators=(",", ":")) + "\n")
+            run["fcst_saved"] = True
     except Exception as e:
         errors.append(f"NWS: {e}"[:300])
 
