@@ -4,39 +4,47 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Odys Flight Test Site — Weather vs NWS Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script>try{const t=localStorage.getItem("l62-wx-theme"); if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <style>
 :root{
   color-scheme:light;
-  /* Odys palette: black + three teals (#085f6b, #138387, #129899) */
-  --bg:#f2f6f6; --surface:#ffffff; --border:#d9e4e5; --grid:#ebf1f1;
-  --text:#0a1416; --text2:#41575a; --muted:#7f9294;
-  --accent:#085f6b; --accent-2:#138387; --accent-3:#129899; --on-accent:#ffffff;
-  --obs:#0a1416; --fc:#129899; --fc-soft:#93d2d2; --now:#085f6b;
+  /* Odys brand palette (Brand Guidelines 2025):
+     Midnight #0f232e · Odys Teal #085f6b · Glacier #8fc1bd · Signal #f06543 (accent, <5%)
+     Logo-only teals: Medium #138387, Light #129899 · logo ink: black on light, off-white #e6e6e6 on dark */
+  --midnight:#0f232e; --odys-teal:#085f6b; --glacier:#8fc1bd; --signal:#f06543;
+  --bg:#f4f9f8;            /* Glacier 10% */
+  --surface:#ffffff; --border:#ddecea; /* Glacier 30% */ --grid:#e9f3f2; /* Glacier 20% */
+  --text:#0f232e; --text2:#3f4f58; /* Midnight 80% */ --muted:#879196; /* Midnight 50% */
+  --accent:#085f6b; --on-accent:#ffffff; --head:#085f6b;
+  --obs:#0f232e; --fc:#085f6b; --fc-soft:#9cbfc4; /* Odys Teal 40% */ --now:#f06543;
   --good:#0a7d3c; --warn:#a86b00; --bad:#c23b3a;
-  --chip:#e6eeee;
+  --chip:#e9f3f2;
   --wc-lo:#008300; --wc-mid:#eda100; --wc-hi:#e34948; --wc-na:#8a8984;
-  --day:#fbf5e1;
+  --night:#eef1f2;         /* Midnight 6%: night shading, so daylight reads lighter */
+  --logo-ink:#000000;
 }
 :root[data-theme="dark"]{
-    color-scheme:dark;
-    --bg:#0a1112; --surface:#111c1e; --border:#21363a; --grid:#172729;
-    --text:#edf4f4; --text2:#b0c3c5; --muted:#7c9295;
-    --accent:#1fa8a6; --accent-2:#138387; --accent-3:#129899; --on-accent:#041012;
-    --obs:#edf4f4; --fc:#25b8b5; --fc-soft:#1c5f60; --now:#4cc7c3;
-    --good:#3fb96f; --warn:#e0a42f; --bad:#e66767; --chip:#1a2b2d;
-    --wc-lo:#0ca30c; --wc-mid:#c98500; --wc-hi:#e66767; --wc-na:#8f8e86;
-    --day:#1d2620;
+  color-scheme:dark;
+  --bg:#0a1920; --surface:#0f232e; /* Midnight */ --border:#24394a; --grid:#1a2f3b;
+  --text:#ffffff; --text2:#c5ced2; --muted:#87959c;
+  --accent:#8fc1bd; --on-accent:#0f232e; --head:#8fc1bd;   /* Glacier on Midnight */
+  --obs:#ffffff; --fc:#8fc1bd; --fc-soft:#426267; /* Glacier 40% on Midnight */ --now:#f06543;
+  --good:#3fb96f; --warn:#e0a42f; --bad:#e66767; --chip:#1a2f3b;
+  --wc-lo:#0ca30c; --wc-mid:#c98500; --wc-hi:#e66767; --wc-na:#8f8e86;
+  --night:#0a1a23;
+  --logo-ink:#e6e6e6;      /* off-white */
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-feature-settings:"tnum" 0}
 .wrap{max-width:1440px;margin:0 auto;padding:20px 16px 48px}
 header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
-h1{font-size:20px;margin:0 0 2px;font-weight:650;letter-spacing:-.01em}
+h1{font-size:21px;margin:0 0 2px;font-weight:600;color:var(--head);letter-spacing:-.01em}
 .sub{color:var(--text2);font-size:13px}
 .status{display:flex;flex-direction:column;gap:4px;align-items:flex-end;font-size:12.5px;color:var(--text2)}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;background:var(--chip);font-weight:550;font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;background:var(--chip);font-weight:600;font-size:12px}
 .pill .dot{width:8px;height:8px;border-radius:50%}
 .controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;position:sticky;top:0;z-index:20}
 .ctl{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2)}
@@ -45,24 +53,24 @@ h1{font-size:20px;margin:0 0 2px;font-weight:650;letter-spacing:-.01em}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.15)}
 .btn{border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;padding:5px 10px;border-radius:7px;cursor:pointer}
 .btn.primary{font-weight:600;background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.brand{display:flex;align-items:center;gap:14px}
-.brand svg{width:46px;height:38px;flex:none}
-header{border-bottom:3px solid var(--accent);padding-bottom:14px}
-.cellhead h3,.tile .lbl{color:var(--accent)}
-.boardhead b,h2{color:var(--accent)}
+.brand{display:flex;align-items:center;gap:22px}
+.brand svg{width:48px;height:40px;flex:none}
+header{border-bottom:1px solid var(--signal);padding-bottom:16px}
+.cellhead h3,.tile .lbl{color:var(--head)}
+.boardhead b,h2{color:var(--head)}
 .spacer{flex:1}
-h2{font-size:14px;font-weight:650;margin:22px 0 10px}
+h2{font-size:14px;font-weight:600;margin:22px 0 10px}
 h2 small{font-weight:400;color:var(--muted);margin-left:6px}
 .boardhead{display:grid;grid-template-columns:minmax(220px,1fr) 3fr;gap:10px;margin:0 0 6px;font-size:12px;color:var(--muted)}
-.boardhead b{color:var(--text);font-size:14px;font-weight:650;margin-right:6px}
+.boardhead b{color:var(--text);font-size:14px;font-weight:600;margin-right:6px}
 
 /* 5 x 2 board: current conditions (left) | observed vs forecast plot (right, 3x wider) */
 .board{display:grid;grid-template-columns:minmax(220px,1fr) 3fr;gap:10px}
 .tile,.cell{background:var(--surface);border:1px solid var(--border);border-radius:10px}
 .tile{padding:12px 14px;display:flex;flex-direction:column}
 .tile .lbl{font-size:12px;color:var(--text2);display:flex;justify-content:space-between;gap:6px}
-.tile .val{font-size:30px;font-weight:650;letter-spacing:-.02em;margin:4px 0 4px;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
-.tile .val.xl{font-size:44px}
+.tile .val{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:4px 0 4px;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
+.tile .val.xl{font-size:44px;font-weight:900}
 .tile .val .u{font-size:14px;font-weight:500;color:var(--text2)}
 .tile .fc{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums;margin-top:2px}
 .tile .fc b{font-weight:600;color:var(--text)}
@@ -89,7 +97,7 @@ h2 small{font-weight:400;color:var(--muted);margin-left:6px}
 /* wind tile */
 .dial{width:200px;height:200px;flex:none;align-self:center;margin:4px 0}
 .dial-card{font-size:11px;fill:var(--muted);font-weight:600}
-.dial-speed{font-size:34px;font-weight:650;fill:var(--text);letter-spacing:-.02em}
+.dial-speed{font-size:34px;font-weight:900;fill:var(--text);letter-spacing:-.02em}
 .dial-unit{font-size:12px;fill:var(--text2)}
 .dial-gust{font-size:13px;font-weight:600;fill:var(--text2)}
 .wind-txt{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px;font-variant-numeric:tabular-nums;align-items:center}
@@ -99,7 +107,7 @@ h2 small{font-weight:400;color:var(--muted);margin-left:6px}
 .dial-key{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:11px;color:var(--muted);margin-top:8px}
 .dial-key span{display:inline-flex;align-items:center;gap:4px}
 .kdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted)}
-.limits{margin:-12px -14px 10px;padding:9px 14px;border-radius:9px 9px 0 0;font-weight:700;font-size:14px;letter-spacing:.01em;color:#fff}
+.limits{margin:-12px -14px 10px;padding:9px 14px;border-radius:9px 9px 0 0;font-weight:600;font-size:14px;letter-spacing:.01em;color:#fff}
 .limits.wc-lo{background:var(--wc-lo)} .limits.wc-mid{background:var(--wc-mid);color:#1a1300} .limits.wc-hi{background:var(--wc-hi)} .limits.wc-na{background:var(--muted)}
 .chip{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
 .wc-lo{background:var(--wc-lo)} .wc-mid{background:var(--wc-mid)} .wc-hi{background:var(--wc-hi)} .wc-na{background:var(--wc-na)}
@@ -115,7 +123,7 @@ th{font-weight:600;color:var(--text2);font-size:12px}
 .sq-main{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-variant-numeric:tabular-nums}
 .sq-main .trend{width:26px;height:26px;flex:none}
 .sq-main.up .trend{color:var(--accent)} .sq-main.dn .trend{color:var(--accent)} .sq-main.eq .trend{color:var(--muted)}
-.sq-val{font-size:34px;font-weight:650;letter-spacing:-.02em}
+.sq-val{font-size:34px;font-weight:600;letter-spacing:-.02em}
 .sq-u{font-size:13px;color:var(--text2);align-self:flex-end;margin-bottom:8px}
 .sq-what{font-size:12px;color:var(--text2);margin-top:2px}
 .sq-last{font-size:11px;color:var(--muted);margin-top:4px}
@@ -144,7 +152,12 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
 <div class="wrap">
 <header>
   <div class="brand">
-    <svg viewBox="0 0 1029 843" role="img" aria-label="Odys"><path d="M1026,45 L1018,43 L622,242 L594,259 L570,278 L551,297 L535,317 L520,340 L505,371 L498,391 L491,420 L488,443 L483,547 L474,634 L464,700 L454,751 L442,800 L432,832 L433,838 L435,840 L445,840 L1026,57 L1028,53Z" fill="var(--text)"/><path d="M1006,5 L1002,1 L713,1 L338,190 L335,194 L335,202 L338,206 L384,230 L417,241 L442,246 L459,248 L500,248 L523,245 L556,237 L582,227 L1003,15 L1006,12Z" fill="#085f6b"/><path d="M167,104 L171,112 L192,123 L224,135 L244,140 L284,145 L321,144 L347,140 L367,135 L397,124 L642,1 L359,1 L171,96Z" fill="#138387"/><path d="M1,14 L7,20 L25,29 L61,42 L95,49 L139,51 L169,48 L212,37 L232,29 L288,1 L9,0 L4,2 L1,6Z" fill="#129899"/></svg>
+    <svg viewBox="7.55 7.78 5.4 4.37" role="img" aria-label="Odys">
+      <path fill="var(--logo-ink)" d="M 12.851562 8.117188 L 9.925781 12.066406 C 9.898438 12.101562 9.839844 12.074219 9.855469 12.027344 C 10.050781 11.398438 10.113281 10.667969 10.132812 10.136719 C 10.148438 9.671875 10.414062 9.257812 10.828125 9.050781 L 12.800781 8.054688 C 12.839844 8.035156 12.878906 8.082031 12.851562 8.117188"/>
+      <path fill="#129899" d="M 9.136719 7.835938 L 7.726562 7.835938 C 7.671875 7.835938 7.65625 7.90625 7.699219 7.933594 C 8.066406 8.136719 8.511719 8.148438 8.890625 7.957031 Z"/>
+      <path fill="#138387" d="M 9.496094 7.835938 L 8.542969 8.316406 C 8.507812 8.332031 8.507812 8.386719 8.542969 8.40625 C 8.910156 8.613281 9.355469 8.621094 9.734375 8.433594 L 10.921875 7.835938 Z"/>
+      <path fill="#085f6b" d="M 11.28125 7.835938 L 9.386719 8.789062 C 9.351562 8.808594 9.347656 8.859375 9.386719 8.878906 L 9.472656 8.929688 C 9.839844 9.136719 10.285156 9.144531 10.660156 8.957031 L 12.730469 7.914062 C 12.769531 7.894531 12.753906 7.835938 12.710938 7.835938 Z"/>
+    </svg>
     <div>
     <h1>Odys Flight Test Site — Weather vs NWS Forecast</h1>
     <div class="sub">Elk Hills-Buttonwillow Airport (L62) weather station (≈35.353, −119.481) compared with the NWS forecast for 35.355, −119.481 · times in Pacific</div>
@@ -175,7 +188,7 @@ details summary{cursor:pointer;color:var(--text2);font-size:13px;margin:22px 0 8
   Forecast: <a href="https://forecast.weather.gov/MapClick.php?FcstType=graphical&textField1=35.355&textField2=-119.481">NWS hourly forecast graph</a> (same NDFD grid, via api.weather.gov gridpoint data), snapshotted every hour.
   “Forecast lead” picks, for each observation, the newest forecast issued at least that many hours earlier, so you can see how accuracy changes with lead time. “Latest” uses the newest forecast fetched before the observation.
   <span id="datalinks"></span>
-  Gust direction is not reported separately by either source; the station’s wind direction is used. Observed hourly precipitation is the change in the station’s accumulated-rain counter between samples; NWS 6-hour QPF is spread evenly across its hours. NWS does not forecast pressure, so that plot is observed only; the station reports pressure adjusted to sea level (≈1013 hPa scale), which is close to, but not the same as, an altimeter setting. Shaded plot backgrounds mark daylight (sunrise to sunset at L62).
+  Gust direction is not reported separately by either source; the station’s wind direction is used. Observed hourly precipitation is the change in the station’s accumulated-rain counter between samples; NWS 6-hour QPF is spread evenly across its hours. NWS does not forecast pressure, so that plot is observed only; the station reports pressure adjusted to sea level (≈1013 hPa scale), which is close to, but not the same as, an altimeter setting. Plot backgrounds are lighter in daylight (sunrise to sunset at L62) and shaded at night.
 </div>
 </div>
 
@@ -324,6 +337,8 @@ function windDial(last, Fnow){
   // glyph is 18 units tall (tip at −9 before rotation); rotate(180) points it at the centre.
   // Observed: tip just touches the ring. NWS: tip just touches the observed arrow's tail when aligned.
   const SO=1.2, SN=0.75, rObs=R+1+9*SO, rNws=rObs+9*SO+9*SN;
+  // NWS leader line: from the ring out to the tip of the NWS arrow, so the marker reads as "on" the dial
+  if(Fnow.WD){ s.append(sv("line",{x1:0,y1:-R,x2:0,y2:-(rNws-9*SN),transform:`rotate(${Fnow.WD.v})`,stroke:"var(--fc)","stroke-width":2,"stroke-linecap":"round"})); }
   if(Fnow.WD){ const g=sv("g",{transform:`rotate(${Fnow.WD.v}) translate(0,${-rNws}) rotate(180) scale(${SN})`});
     g.append(sv("path",{d:ARROW_D,fill:"var(--fc)","fill-opacity":0.3,stroke:"var(--fc)","stroke-width":1.3,"vector-effect":"non-scaling-stroke","stroke-linejoin":"round"})); s.append(g); }
   if(last.wind_dir!=null){ const g=sv("g",{transform:`rotate(${last.wind_dir}) translate(0,${-rObs}) rotate(180) scale(${SO})`});
@@ -442,8 +457,11 @@ function frame(plot, yDomain, opts={}){
   d3.select(ya).append("svg").attr("width",44).attr("height",H).append("g").attr("class","axis").attr("transform","translate(43,0)")
     .call(d3.axisLeft(y).ticks(opts.ticks||5).tickSizeOuter(0).tickFormat(opts.yfmt||null));
   const svg=d3.select(inner).append("svg").attr("width",W).attr("height",H);
-  svg.append("g").attr("pointer-events","none").selectAll("rect").data(DAYLIGHT).join("rect")
-    .attr("x",d=>x(d[0])).attr("width",d=>Math.max(0,x(d[1])-x(d[0]))).attr("y",m.t).attr("height",H-m.b-m.t).attr("fill","var(--day)");
+  const NIGHT=[]; let prevSet=TIME.t0;
+  DAYLIGHT.forEach(([rise,set])=>{ if(rise>prevSet) NIGHT.push([Math.max(prevSet,TIME.t0), Math.min(rise,TIME.t1)]); prevSet=Math.max(prevSet,set); });
+  if(prevSet<TIME.t1) NIGHT.push([prevSet,TIME.t1]);
+  svg.append("g").attr("pointer-events","none").selectAll("rect").data(NIGHT.filter(d=>d[1]>d[0])).join("rect")
+    .attr("x",d=>x(d[0])).attr("width",d=>Math.max(0,x(d[1])-x(d[0]))).attr("y",m.t).attr("height",H-m.b-m.t).attr("fill","var(--night)");
   svg.append("g").selectAll("line").data(y.ticks(opts.ticks||5)).join("line").attr("x1",0).attr("x2",W).attr("y1",d=>y(d)).attr("y2",d=>y(d)).attr("stroke","var(--grid)");
   // midnight separators
   const days=d3.timeHour.every(1).range(new Date(TIME.t0), new Date(TIME.t1)).filter(d=>Number(hpH.format(d))%24===0);
