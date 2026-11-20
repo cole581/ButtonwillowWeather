@@ -279,3 +279,4 @@ ts,temp_c,dew_c,rh,wind_ms,gust_ms,wind_dir,precip_rate_mmh,precip_accum_mm,pres
 2026-11-20T12:30:00Z,3.78,2.29,90.0,0.67,1.0,102.0,0.0,0.0,1006.4,partly-cloudy-night,True,2026-11-20T12:30:19Z
 2026-11-20T12:45:00Z,3.56,2.23,91.0,0.63,1.0,95.0,0.0,0.0,1006.4,partly-cloudy-night,True,2026-11-20T12:45:13Z
 2026-11-20T13:00:00Z,3.48,2.3,92.0,1.0,1.0,97.0,0.0,0.0,1006.4,partly-cloudy-night,True,2026-11-20T13:00:24Z
+2026-11-20T13:14:00Z,3.56,2.38,92.0,0.5,0.5,97.0,0.0,0.0,1006.4,partly-cloudy-night,True,2026-11-20T13:15:13Z
